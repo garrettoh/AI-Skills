@@ -44,3 +44,19 @@ Local sample headers informed the profiles; no sample CSV data is included in Gi
 ## PECmd execution pivots
 
 Use ez-prefetch-parser/scripts/filter_csv.py on a detailed PECmd CSV with --search-columns ExecutableName for executable pivots, or FilesLoaded/Directories for referenced paths. Inspect RunCount, ParsingError and Note. Use ez-prefetch-parser/scripts/correlate_timeline.py on either detailed or flattened exports for execution timelines; timezone rules above apply. See [Prefetch skill](ez-prefetch-parser/SKILL.md) for commands and interpretation limits.
+
+## Install KAPE skills
+
+From the repository root in PowerShell:
+
+    .\incident-response\kape_analysis\scripts\install.ps1
+
+The installer copies the nine KAPE skills and their shared kape_core helper to %CODEX_HOME%\skills (or %USERPROFILE%\.codex\skills) and verifies the installed copy. To choose another skills directory:
+
+    .\incident-response\kape_analysis\scripts\install.ps1 -SkillsRoot C:\path\to\skills
+
+To verify or recheck an installation:
+
+    python .\incident-response\kape_analysis\scripts\verify_install.py --skills-root "$env:USERPROFILE\.codex\skills"
+
+The verifier checks each skill and runs schema routing, an EVTX keyword filter, and timeline correlation against temporary synthetic CSV evidence.
