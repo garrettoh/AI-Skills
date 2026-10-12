@@ -11,7 +11,7 @@ Use for pre-parsed CSV artifacts described above. Raw artifacts and archive extr
 
 ## Workflow
 
-For shared investigations with Hindsight or other sources, read [investigation-orchestrator](../investigation-orchestrator/SKILL.md) and its [exchange contract](../investigation-orchestrator/references/exchange.md). Accept initial leads from the user, the main orchestrator or a Hindsight outbox. Publish all investigation outputs and concrete next pivots under `<working-directory>/agent_output/<case>/`; use the same case and directory across sources. The structured wrapper supplies normalized events, source inbox/outbox, coverage, persistent leads and a combined timeline:
+For shared investigations, read the [exchange contract](../../investigation_core/exchange.md) (installed location: investigation_core/exchange.md under the skills root). Use investigation-orchestrator to coordinate additional sources when installed; it is optional for standalone KAPE analysis. Accept initial leads from the user, the main orchestrator or a Hindsight outbox. Publish all investigation outputs and concrete next pivots under `<working-directory>/agent_output/<case>/`; use the same case and directory across sources. The structured wrapper supplies normalized events, source inbox/outbox, coverage, persistent leads and a combined timeline:
 
     python kape-orchestrator/scripts/investigate.py INPUT --case incident-01 --lead fleetdeck --lead "fleet deck"
     python kape-orchestrator/scripts/investigate.py INPUT --case incident-01 --leads-file agent_output/incident-01/reviewed-leads.json

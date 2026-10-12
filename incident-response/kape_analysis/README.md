@@ -1,27 +1,10 @@
 # AI-Skills: KAPE CSV threat hunting
 
-Eleven modular skills for already parsed KAPE CSV and Hindsight browser exports. Python 3.10+; standard library only. Keep kape_core and investigation_core beside all skill folders. Evidence remains local. The historical kape_analysis package now includes the shared investigation coordinator and Hindsight analyzer.
+Nine KAPE skills for already parsed forensic CSV exports. Python 3.10+; standard library only. Individual installers include required shared helpers. Evidence remains local.
 
 ## Shared investigations
 
-From the repository root, with your case working directory as the current directory (use absolute script paths when elsewhere):
-
-```powershell
-python incident-response/kape_analysis/investigation-orchestrator/scripts/investigate.py --case incident-01 --source "kape=C:\case\parse" --source "hindsight=C:\case\Hindsight_Manual_Drops" --lead fleetdeck --lead "fleet deck"
-```
-
-Both sources receive the same initial leads. Hindsight scans JSONL efficiently one record at a time; companion XLSX is excluded with a coverage note. The coordinator saves a combined report.md, full sorted timeline.jsonl/timeline.csv, untimed observations, leads.json, state, and per-source inbox/events/coverage/outbox under `<working-directory>/agent_output/incident-01/`. Review the observation timeline, add the analyst narrative to analysis.md, and deliver it before expanding the search. Observations and candidate leads are not verdicts of compromise.
-
-For example, a FleetDeck hit in KAPE containing a URL proposes that URL and domain as candidates with source/record and parent-lead citations. After reviewing relevance, export selected active leads to a JSON file and run the same command with `--leads-file agent_output/incident-01/reviewed-leads.json`. To deliberately adopt all candidates for both sources, repeat with `--follow-candidates`. Each invocation completes one round and saves its deliverable; it never recursively follows candidates within that round. Stop when relevant leads are exhausted or the requested scope is satisfied.
-
-Standalone source orchestrators use the same protocol and case store:
-
-```powershell
-python incident-response/kape_analysis/hindsight-orchestrator/scripts/hunt_hindsight.py "C:\case\Hindsight_Manual_Drops" --case incident-01 --lead fleetdeck
-python incident-response/kape_analysis/kape-orchestrator/scripts/investigate.py "C:\case\parse" --case incident-01 --leads-file agent_output/incident-01/leads.json
-```
-
-Use one writer at a time. Already searched leads are skipped per source root; use `--rescan` when evidence, time bounds or encoding change. `--output-root` changes the working directory's default agent_output location. `--start`/`--end` require offset-bearing ISO dates. Naive timestamps stay untimed unless verified `--assume-utc` is supplied. Full event exports are uncapped; report display defaults to 100 events, new candidates to 200 per source and active leads to 500. Counts/errors/exclusions and omitted proposals are disclosed. Read the [exchange contract](investigation-orchestrator/references/exchange.md) for schemas and registering future orchestrators. No sample case evidence belongs in Git.
+Hindsight and the main investigation orchestrator are separate folders under incident-response. See the [shared guide](../README.md) for lead exchange, normalized timelines and installation of any individual skill. KAPE CSV helpers remain in this folder.
 
 ## Quick start
 
@@ -38,8 +21,6 @@ Inspect headers before choosing columns. Add --assume-utc only after confirming 
 
 | Skill | Artifacts |
 |---|---|
-| investigation-orchestrator | Shared lead exchange, source coordination, normalized timeline and deliverables |
-| hindsight-orchestrator | Streaming browser JSONL analysis; explicit XLSX fallback |
 | kape-orchestrator | Header inventory, generic hunting, cross-artifact timeline |
 | ez-evtx-parser | EvtxECmd |
 | ez-prefetch-parser | PECmd, Amcache, AppCompatCache |
@@ -60,7 +41,7 @@ Exit code 0 indicates a completed scan; 2 indicates errors or malformed rows nee
 
 ## Extending and packaging
 
-Add specific verified header signatures and semantic time fields to incident-response/kape_analysis/kape_core/schemas.py, then a focused skill and wrapper. Deploy the complete checkout: individual skill folders rely on the shared sibling package. No third-party dependencies or installation are required to execute helpers.
+Add specific verified header signatures and semantic time fields to incident-response/kape_analysis/kape_core/schemas.py, then a focused skill and wrapper. Use the shared installer for individual deployment with required helpers; repository scripts can also run directly. No third-party dependencies are required.
 
 Local sample headers informed the profiles; no sample CSV data is included in Git. PECmd detailed and flattened timeline exports were verified against the supplied ProgramExecution1 samples. Detailed execution times include LastRun and PreviousRun0–6; flattened exports use RunTime. Discovery is recursive and independent of folder name. Use one companion export per acquisition for execution counts; both contain overlapping run observations. No other binary parser or non-CSV log support is implied.
 
@@ -70,24 +51,10 @@ Use ez-prefetch-parser/scripts/filter_csv.py on a detailed PECmd CSV with --sear
 
 ## Install KAPE skills
 
-From the repository root in PowerShell:
+Use the [shared installer](../README.md#installation), which defaults to all eleven skills and asks for confirmation after showing the full plan. To install KAPE alone from the repository root:
 
-    .\incident-response\kape_analysis\scripts\install.ps1
+    .\incident-response\scripts\install.ps1 -Skills kape-orchestrator
 
-The installer copies all eleven investigation, Hindsight and KAPE skills and both shared helpers to %CODEX_HOME%\skills (or %USERPROFILE%\.codex\skills) and verifies the installed copy. To choose another skills directory:
+Select any child skill in the same way, for example `-Skills ez-evtx-parser`. Required helpers are included automatically. The old kape_analysis/scripts/install.ps1 and install.sh entry points forward to the shared installer and accept the same options.
 
-    .\incident-response\kape_analysis\scripts\install.ps1 -SkillsRoot C:\path\to\skills
-
-To verify or recheck an installation:
-
-    python .\incident-response\kape_analysis\scripts\verify_install.py --skills-root "$env:USERPROFILE\.codex\skills"
-
-The verifier checks each skill and runs schema routing, an EVTX keyword filter, timeline correlation and shared lead exchange against temporary synthetic CSV/JSONL evidence. It verifies that a KAPE URL lead discovers a Hindsight visit in the next round and that a deliverable exists before that pivot.
-
-## macOS and Linux
-
-Run from the repository root:
-
-    ./incident-response/kape_analysis/scripts/install.sh
-
-You may pass an alternate skills directory as its only argument. For an agent-ready instruction, see [AGENT_INSTALL.md](AGENT_INSTALL.md).
+The [agent installation guide](../AGENT_INSTALL.md) requires showing the plan and receiving user approval before installation.
