@@ -39,4 +39,8 @@ Exit code 0 indicates a completed scan; 2 indicates errors or malformed rows nee
 
 Add specific verified header signatures and semantic time fields to kape_core/schemas.py, then a focused skill and wrapper. Deploy the complete checkout: individual skill folders rely on the shared sibling package. No third-party dependencies or installation are required to execute helpers.
 
-Local sample headers informed the profiles; no sample CSV data is included in Git. PECmd support is provisional because no Prefetch CSV was present. No other binary parser or non-CSV log support is implied.
+Local sample headers informed the profiles; no sample CSV data is included in Git. PECmd detailed and flattened timeline exports were verified against the supplied ProgramExecution1 samples. Detailed execution times include LastRun and PreviousRun0–6; flattened exports use RunTime. Discovery is recursive and independent of folder name. Use one companion export per acquisition for execution counts; both contain overlapping run observations. No other binary parser or non-CSV log support is implied.
+
+## PECmd execution pivots
+
+Use ez-prefetch-parser/scripts/filter_csv.py on a detailed PECmd CSV with --search-columns ExecutableName for executable pivots, or FilesLoaded/Directories for referenced paths. Inspect RunCount, ParsingError and Note. Use ez-prefetch-parser/scripts/correlate_timeline.py on either detailed or flattened exports for execution timelines; timezone rules above apply. See [Prefetch skill](ez-prefetch-parser/SKILL.md) for commands and interpretation limits.

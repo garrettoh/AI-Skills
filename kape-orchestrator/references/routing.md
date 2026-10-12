@@ -10,3 +10,5 @@
 - ez-activity-parser: Hunt parsed Windows Activity and package-ID CSV exports for activity and executable pivots.
 
 Header signatures take precedence. RECmd plugin details remain registry exports even when they contain execution/access evidence. Unknown schemas can be searched but cannot supply timeline fields until a verified profile is added.
+
+PECmd discovery is header-based under ProgramExecution/ProgramExecution1 or any nested folder. Detailed rows provide LastRun and PreviousRun0–6; flattened rows provide RunTime. Both route to ez-prefetch-parser. Avoid treating companion exports as independent execution counts; select one export per acquisition when counting runs.

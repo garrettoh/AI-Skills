@@ -1,6 +1,7 @@
 PROFILES = [
  ("evtx","ez-evtx-parser",{"EventId","TimeCreated","Provider"},["TimeCreated"]),
- ("prefetch","ez-prefetch-parser",{"ExecutableName","RunCount"},["LastRun"]+["LastRun"+str(i) for i in range(8)]),
+ ("prefetch","ez-prefetch-parser",{"ExecutableName","RunCount"},["LastRun"]+["PreviousRun"+str(i) for i in range(7)]+["LastRun"+str(i) for i in range(8)]),
+ ("prefetch-timeline","ez-prefetch-parser",{"ExecutableName","RunTime"},["RunTime"]),
  ("amcache-files","ez-prefetch-parser",{"SHA1","FullPath","FileKeyLastWriteTimestamp"},["FileKeyLastWriteTimestamp","LinkDate"]),
  ("appcompat","ez-prefetch-parser",{"CacheEntryPosition","LastModifiedTimeUTC","Path"},["LastModifiedTimeUTC"]),
  ("mft","ez-filesystem-parser",{"EntryNumber","Created0x10","ParentPath"},[v+s for v in ["Created","LastModified","LastRecordChange","LastAccess"] for s in ["0x10","0x30"]]),
