@@ -60,3 +60,11 @@ To verify or recheck an installation:
     python .\incident-response\kape_analysis\scripts\verify_install.py --skills-root "$env:USERPROFILE\.codex\skills"
 
 The verifier checks each skill and runs schema routing, an EVTX keyword filter, and timeline correlation against temporary synthetic CSV evidence.
+
+## macOS and Linux
+
+Run from the repository root:
+
+    ./incident-response/kape_analysis/scripts/install.sh
+
+You may pass an alternate skills directory as its only argument. For an agent-ready instruction, see [AGENT_INSTALL.md](AGENT_INSTALL.md).
