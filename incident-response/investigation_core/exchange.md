@@ -6,6 +6,7 @@ The working directory is the base for agent_output, independent of evidence loca
 
 | File | Purpose |
 |---|---|
+| dashboard.html | Primary offline user deliverable: searchable timeline, original records, analyst text, leads and coverage; generated each round |
 | report.md | Combined observation timeline, coverage and candidate leads; refreshed before further searches |
 | analysis.md | Analyst narrative with evidence citations, attribution, uncertainty and next steps |
 | timeline.jsonl / timeline.csv | All timed observations, sorted by UTC, without display truncation |
@@ -18,6 +19,8 @@ The working directory is the base for agent_output, independent of evidence loca
 | `<source>/round-NNNN/outbox.json` | Newly proposed leads with evidence and parent leads |
 
 ## Leads
+
+After editing analysis.md, refresh dashboard.html with `python investigation_core/dashboard.py agent_output/<case>` from incident-response or the installed skills root. Present a local dashboard link and a brief completion note instead of duplicating the report in agent output. Keep exports alongside it for download links. The page embeds all matched observations in memory and paginates rendering. Analyst Markdown is displayed as literal text.
 
 Use --leads-file with a JSON object containing `leads`, each with `value` and optional `kind`, `origin`, `evidence`, `status`. `active` leads are searched; `candidate` leads wait for relevance review; `rejected` leads remain recorded. Fields are literal case-insensitive substring filters across individual record values, combined with OR. Exported leads.json can be imported directly. Stable IDs derive from kind and casefolded value. Imported lead IDs are recomputed, never trusted.
 

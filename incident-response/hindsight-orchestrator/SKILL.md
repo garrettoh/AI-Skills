@@ -5,6 +5,8 @@ description: Stream parsed Hindsight browser JSONL exports for investigation lea
 
 # Hindsight orchestrator and analyzer
 
+Use dashboard.html as the primary user deliverable. After updating shared analysis.md, refresh it with `python investigation_core/dashboard.py agent_output/<case>` from incident-response or the installed skills root. Link the dashboard with a brief completion note rather than reproducing the report in agent output; keep exports alongside the HTML. It contains searchable timeline records, analyst text, lead provenance and coverage.
+
 Use for already parsed Hindsight browser exports. Read [formats](references/formats.md) for schema and interpretation. Work efficiently: prefer JSONL, read bounded examples to identify fields, then stream scans through the helper. Never load the complete export into context or memory. The helper processes each JSONL record once per search round, uses a compiled literal prefilter, stores matching events on disk, and sorts in SQLite. JSONL remains the primary format; do not search companion XLSX unless additional workbook-only coverage is needed or the user requests it.
 
 Run from incident-response in the repository (or the installed skills root), or prefix the script with its installed/repository location while keeping the case working directory:

@@ -35,6 +35,17 @@ def main():
             result = subprocess.run(command + list(extra), cwd=work, capture_output=True, text=True, timeout=60)
             if result.returncode != expected:
                 raise RuntimeError(f'Unexpected exit {result.returncode}: {result.stdout} {result.stderr}')
+            case = work / 'agent_output/check'
+            deliverable = json.loads(result.stdout)
+            if Path(deliverable['dashboard']) != case / 'dashboard.html':
+                raise RuntimeError('Workflow did not return the primary dashboard deliverable')
+            html = (case / 'dashboard.html').read_text(encoding='utf-8')
+            embedded = html.split('<script id="case-data" type="application/json">', 1)[1].split('</script>', 1)[0]
+            dashboard = json.loads(embedded)
+            expected_events = [json.loads(line) for name in ('timeline.jsonl', 'untimed.jsonl')
+                               for line in (case / name).read_text(encoding='utf-8').splitlines()]
+            if dashboard['events'] != expected_events:
+                raise RuntimeError('Automatic dashboard did not include complete current-round exports')
         run()
         case = work / 'agent_output/check'
         if not (case / 'report.md').exists():
@@ -72,7 +83,7 @@ def main():
             raise RuntimeError('Malformed JSONL coverage missing')
         if not (case / 'report.md').exists():
             raise RuntimeError('Partial deliverable lost')
-    print('PASS: initial dispatch, deliverable before pivot, KAPE-to-Hindsight URL exchange, UTC sorting, untimed retention, deduplication and malformed coverage')
+    print('PASS: automatic dashboard each round (including partial coverage), initial dispatch, deliverable before pivot, KAPE-to-Hindsight URL exchange, UTC sorting, untimed retention, deduplication and malformed coverage')
 
 
 if __name__ == '__main__':

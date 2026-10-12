@@ -12,6 +12,7 @@ from urllib.parse import urlsplit
 
 from kape_core.cli import cell, stamp
 from .adapters import ADAPTERS
+from .dashboard import build_dashboard
 
 
 def dump(path, value):
@@ -110,6 +111,7 @@ def deliver(db, destination, limit, number):
             report.write('| ' + ' | '.join(cell(v, 400) for v in [kind, value, origin, status]) + ' |\n')
         report.write('\nFull lead provenance and search acknowledgments are in leads.json. Candidate leads need relevance review. Zero matches do not establish absence; inspect source errors, malformed rows, unknown schemas, skipped timestamps, and excluded companion exports.\n')
     export_leads(db, destination)
+    build_dashboard(destination)
 
 
 def scan(db, name, root, leads, args, destination, number):
@@ -259,7 +261,7 @@ def execute(args, only=None):
         db.execute('insert into rounds values(?,?)', (number, json.dumps(scope, ensure_ascii=False, indent=2)))
         db.commit()
         deliver(db, destination, args.limit, number)
-        print(json.dumps({'report': str(destination / 'report.md'), 'round': number, 'sources': summaries}))
+        print(json.dumps({'dashboard': str(destination / 'dashboard.html'), 'report': str(destination / 'report.md'), 'round': number, 'sources': summaries}))
         return 2 if any(s.get('error') or any(c.get('error') or c.get('malformed') for c in s.get('coverage', [])) for s in summaries) else 0
     finally:
         if db:

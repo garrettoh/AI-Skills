@@ -5,6 +5,8 @@ description: Inventory and route pre-parsed KAPE CSV directories and correlate I
 
 # kape-orchestrator
 
+For structured investigations, dashboard.html is the primary user deliverable. After updating shared analysis.md, refresh it with `python investigation_core/dashboard.py agent_output/<case>` from incident-response or the installed skills root. Link the dashboard with a brief completion note rather than reproducing the report in agent output. Keep exports alongside the HTML for downloads. It includes searchable events, full records, analyst text, leads and coverage.
+
 ## Trigger scope
 
 Use for pre-parsed CSV artifacts described above. Raw artifacts and archive extraction require a separate parsing workflow.

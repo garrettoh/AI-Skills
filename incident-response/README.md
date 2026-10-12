@@ -53,6 +53,16 @@ Omit `--skills` to verify the full collection. Legacy KAPE installer and verifie
 
 ## Shared investigations
 
+Each structured investigation automatically creates **dashboard.html**, the primary user deliverable. Open it locally to browse a searchable UTC timeline with activity bars, source/artifact/date filters, untimed observations, full evidence records, lead provenance and coverage. The HTML is self-contained and uses no network services. Keep the case exports alongside it for download links. After writing analyst interpretation to analysis.md, refresh the page:
+
+```powershell
+python incident-response/investigation-orchestrator/scripts/build_dashboard.py agent_output/incident-01
+```
+
+The shared workflow calls the Python builder automatically at the end of every round. The builder fills a fixed HTML/CSS/JavaScript template with case exports; agents do not design or generate a new dashboard each time. The refresh command above only updates the embedded data after analyst edits. Generated reports and demos are excluded from Git by `reports/` and `agent_output/`; verification fixtures use temporary directories.
+
+Deliver the dashboard link with a short completion note instead of repeating the incident report in agent output. The dashboard embeds all matched observations and paginates rendering; browser memory grows with case size. Analyst Markdown is shown as literal text.
+
 From the repository root, or use absolute script paths from your case working directory:
 
 ```powershell
