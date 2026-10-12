@@ -11,6 +11,13 @@ Use for pre-parsed CSV artifacts described above. Raw artifacts and archive extr
 
 ## Workflow
 
+For shared investigations with Hindsight or other sources, read [investigation-orchestrator](../investigation-orchestrator/SKILL.md) and its [exchange contract](../investigation-orchestrator/references/exchange.md). Accept initial leads from the user, the main orchestrator or a Hindsight outbox. Publish all investigation outputs and concrete next pivots under `<working-directory>/agent_output/<case>/`; use the same case and directory across sources. The structured wrapper supplies normalized events, source inbox/outbox, coverage, persistent leads and a combined timeline:
+
+    python kape-orchestrator/scripts/investigate.py INPUT --case incident-01 --lead fleetdeck --lead "fleet deck"
+    python kape-orchestrator/scripts/investigate.py INPUT --case incident-01 --leads-file agent_output/incident-01/reviewed-leads.json
+
+Read the current report and write the analyst interpretation into shared analysis.md. Deliver the timeline with citations and uncertainty before following discovered URLs, domains, hashes or paths. Review candidate relevance and send adopted leads to every available source through the main orchestrator. Run one writer per case; use --rescan if evidence or search scope changes. Keep investigation_core and kape_core together with the skill folders. Standalone inventory/hunt reports below should also be written under agent_output during investigations.
+
 Inventory headers first, then read the applicable child skill. Unknown schemas need explicit inspection. Correlate host, user and executable identity across acquisitions before interpreting temporal proximity.
 
 Run from the monorepo root with Python 3.10+. Keep the complete repository together: each helper imports the sibling kape_core directory.

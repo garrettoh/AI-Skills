@@ -1,0 +1,42 @@
+# Shared investigation exchange, version 1
+
+The working directory is the base for agent_output, independent of evidence location and script location. Specify --output-root explicitly when invoked from another directory. Reuse --case to combine rounds and independent KAPE/Hindsight runs. Originals must remain outside agent_output. Writers are serialized with .writer.lock; after a crash, verify the previous process stopped before removing that lock. Failed rounds may leave files; the committed rounds and report define completed work. Keep the SQLite state with the case when resuming.
+
+## Files
+
+| File | Purpose |
+|---|---|
+| report.md | Combined observation timeline, coverage and candidate leads; refreshed before further searches |
+| analysis.md | Analyst narrative with evidence citations, attribution, uncertainty and next steps |
+| timeline.jsonl / timeline.csv | All timed observations, sorted by UTC, without display truncation |
+| untimed.jsonl | Matches with missing, unparseable or unverified timezone timestamps |
+| leads.json | Shared leads, provenance, status and source search acknowledgments |
+| investigation.sqlite | Persistent deduplicated observations, lead queue and round history |
+| `<source>/round-NNNN/inbox.json` | Source input root and requested leads |
+| `<source>/round-NNNN/events.jsonl` | That source's normalized observations for the round |
+| `<source>/round-NNNN/coverage.json` | Per-file counts, schema/header information, exclusions, errors and timestamp gaps |
+| `<source>/round-NNNN/outbox.json` | Newly proposed leads with evidence and parent leads |
+
+## Leads
+
+Use --leads-file with a JSON object containing `leads`, each with `value` and optional `kind`, `origin`, `evidence`, `status`. `active` leads are searched; `candidate` leads wait for relevance review; `rejected` leads remain recorded. Fields are literal case-insensitive substring filters across individual record values, combined with OR. Exported leads.json can be imported directly. Stable IDs derive from kind and casefolded value. Imported lead IDs are recomputed, never trusted.
+
+```json
+{"leads":[{"kind":"url","value":"https://example.invalid/download","origin":"kape","status":"active","evidence":{"source":"events.csv","record":"42","parent_leads":["original-lead-id"]}}]}
+```
+
+Automatic URL/domain/path/hash extraction operates only on matching records. A candidate is a search suggestion, not a finding of maliciousness. Each proposal retains its first source/record, originating source, event IDs and parent leads. Repeated appearances remain available in the event data. Search acknowledgments identify adapter plus resolved source root. An incomplete source is not acknowledged and remains retryable. Provide explicit keyword aliases for software names rather than automatically expanding to common words such as "agent".
+
+## Events and timestamps
+
+Every normalized observation includes event_id, timestamp_utc (ISO UTC or null), timestamp_raw, time_field, timezone_basis, orchestrator, family, source, record, host, user, profile, matched_leads, observation, confidence and original data. KAPE citations are logical CSV record numbers with the header as record 1. Hindsight JSONL citations are physical lines; XLSX citations are `Sheet!row`. Preserve all original record fields and original artifact identifiers within data. Never infer host from an export filename or equate a browser profile directory with confirmed user identity.
+
+Each source time field is a distinct event; file creation, visit, registry modification and execution times are not interchangeable. Unknown timestamps remain untimed even under time bounds and their uncertainty must be disclosed. Naive timestamps require verified --assume-utc; Hindsight XLSX headers explicitly labelled `(UTC)` establish UTC. Unknown KAPE schemas are searchable but untimed. Bounds filter timed events only. Source rows matching leads may yield several timestamp observations or none inside the bounds.
+
+Duplicate source/record/time observations across rounds merge matched lead IDs. Different acquisitions and exports remain separate; do not claim event uniqueness or acquisition identity from similarity alone. The report caps display only. Full exports preserve evidence strings; treat them as data when opening in other tools.
+
+## Future orchestrators
+
+Register a trusted Python adapter in investigation_core/adapters.py's ADAPTERS mapping. It takes `(root, encoding, coverage)` and yields dictionaries with source, record, data (field/value mapping), family, times (list of `(semantic_field, original_string, explicit_utc_bool)`), host, user and profile. Stream records and append per-file coverage with scanned/malformed counts and any error. The coordinator supplies matching, timestamps, lead extraction, persistence, source inbox/outbox and combined deliverables. Add a focused source skill and wrapper using `run('registered-name')`, and package it with the shared libraries. Do not load or execute adapter paths from case evidence.
+
+For a source-specific lead extractor, extend candidates() using verified fields and concrete pivots. For sources requiring a different search strategy, publish equivalent source outputs and implement a trusted adapter bridge. Every new source must preserve evidence citations and disclose timezone/coverage gaps.

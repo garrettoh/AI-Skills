@@ -15,7 +15,9 @@ else
 fi
 mkdir -p "$SKILLS_ROOT"
 SKILLS_ROOT=$(CDPATH= cd -- "$SKILLS_ROOT" && pwd)
-SKILLS="kape-orchestrator
+SKILLS="investigation-orchestrator
+hindsight-orchestrator
+kape-orchestrator
 ez-evtx-parser
 ez-prefetch-parser
 ez-registry-parser
@@ -35,10 +37,12 @@ for name in $SKILLS; do
 done
 mkdir -p "$SKILLS_ROOT/kape_core"
 cp -R "$PACKAGE_ROOT/kape_core/." "$SKILLS_ROOT/kape_core/"
+mkdir -p "$SKILLS_ROOT/investigation_core"
+cp -R "$PACKAGE_ROOT/investigation_core/." "$SKILLS_ROOT/investigation_core/"
 PYTHON=${PYTHON:-python3}
 if ! command -v "$PYTHON" >/dev/null 2>&1; then
     printf '%s\n' "Python 3 is required to verify the installation." >&2
     exit 1
 fi
 "$PYTHON" "$PACKAGE_ROOT/scripts/verify_install.py" --skills-root "$SKILLS_ROOT"
-printf 'KAPE skills installed and verified in %s\n' "$SKILLS_ROOT"
+printf 'Investigation, Hindsight and KAPE skills installed and verified in %s\n' "$SKILLS_ROOT"

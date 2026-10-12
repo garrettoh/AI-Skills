@@ -17,6 +17,8 @@ $SkillsRoot = [System.IO.Path]::GetFullPath($SkillsRoot)
 New-Item -ItemType Directory -Path $SkillsRoot -Force | Out-Null
 
 $skillNames = @(
+    "investigation-orchestrator",
+    "hindsight-orchestrator",
     "kape-orchestrator",
     "ez-evtx-parser",
     "ez-prefetch-parser",
@@ -36,6 +38,7 @@ foreach ($name in $skillNames) {
     Copy-Item -Path $source -Destination $SkillsRoot -Recurse -Force
 }
 Copy-Item -Path (Join-Path $packageRoot "kape_core") -Destination $SkillsRoot -Recurse -Force
+Copy-Item -Path (Join-Path $packageRoot "investigation_core") -Destination $SkillsRoot -Recurse -Force
 
 $python = Get-Command python -ErrorAction SilentlyContinue
 if (-not $python) {
@@ -46,4 +49,4 @@ $verifier = Join-Path $packageRoot "scripts\verify_install.py"
 if ($LASTEXITCODE -ne 0) {
     throw "Installation verification failed with exit code $LASTEXITCODE"
 }
-Write-Host "KAPE skills installed and verified in $SkillsRoot"
+Write-Host "Investigation, Hindsight and KAPE skills installed and verified in $SkillsRoot"

@@ -8,6 +8,7 @@ import tempfile
 from pathlib import Path
 
 SKILLS = [
+    "investigation-orchestrator", "hindsight-orchestrator",
     "kape-orchestrator", "ez-evtx-parser", "ez-prefetch-parser",
     "ez-registry-parser", "ez-filesystem-parser", "ez-fileaccess-parser",
     "ez-srum-parser", "ez-recyclebin-parser", "ez-activity-parser",
@@ -31,6 +32,8 @@ def main():
     missing = [name for name in SKILLS if not (skills_root/name/"SKILL.md").is_file()]
     if not (skills_root/"kape_core"/"cli.py").is_file():
         missing.append("kape_core")
+    if not (skills_root/"investigation_core"/"workflow.py").is_file():
+        missing.append("investigation_core")
     if missing:
         raise SystemExit("Missing installed components: " + ", ".join(missing))
 
@@ -66,7 +69,9 @@ def main():
         if "Events in time bounds: 1" not in report or "2026-01-02T03:04:05" not in report:
             raise RuntimeError("Installed timeline helper did not return the expected timestamp")
 
-    print(f"PASS: {len(SKILLS)} skills and kape_core are installed at {skills_root}")
+    run([sys.executable, str(Path(__file__).with_name('verify_orchestration.py')),
+         '--skills-root', str(skills_root)])
+    print(f"PASS: {len(SKILLS)} skills and shared helpers are installed at {skills_root}")
     print("PASS: schema routing, keyword filtering, and UTC timeline correlation")
 
 if __name__ == "__main__":
