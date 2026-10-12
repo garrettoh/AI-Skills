@@ -2,6 +2,8 @@
 
 The working directory is the base for agent_output, independent of evidence location and script location. Specify --output-root explicitly when invoked from another directory. Reuse --case to combine rounds and independent KAPE/Hindsight runs. Originals must remain outside agent_output. Writers are serialized with .writer.lock; after a crash, verify the previous process stopped before removing that lock. Failed rounds may leave files; the committed rounds and report define completed work. Keep the SQLite state with the case when resuming.
 
+Within one coordinator invocation, source scans run concurrently (default --workers 2). Each worker owns a separate SQLite connection and `<source>/round-NNNN/scan.sqlite`, seeded with the same existing lead snapshot. Workers write only their source artifacts. Once all scans finish, the coordinator merges events, leads and search acknowledgments in source argument order and publishes the combined timeline/dashboard. Duplicate lead IDs keep the first provenance in that order; each source outbox retains its own proposals. Candidate caps apply independently per source. Existing event matches are unioned across rounds. Use --workers 1 for sequential scans. Separate coordinator or standalone invocations for the same case remain serialized by the case lock.
+
 ## Files
 
 | File | Purpose |
@@ -17,6 +19,7 @@ The working directory is the base for agent_output, independent of evidence loca
 | `<source>/round-NNNN/events.jsonl` | That source's normalized observations for the round |
 | `<source>/round-NNNN/coverage.json` | Per-file counts, schema/header information, exclusions, errors and timestamp gaps |
 | `<source>/round-NNNN/outbox.json` | Newly proposed leads with evidence and parent leads |
+| `<source>/round-NNNN/scan.sqlite` | Isolated scan state retained for review; shared investigation.sqlite remains authoritative |
 
 ## Leads
 
@@ -41,5 +44,7 @@ Duplicate source/record/time observations across rounds merge matched lead IDs. 
 ## Future orchestrators
 
 Register a trusted Python adapter in investigation_core/adapters.py's ADAPTERS mapping. It takes `(root, encoding, coverage)` and yields dictionaries with source, record, data (field/value mapping), family, times (list of `(semantic_field, original_string, explicit_utc_bool)`), host, user and profile. Stream records and append per-file coverage with scanned/malformed counts and any error. The coordinator supplies matching, timestamps, lead extraction, persistence, source inbox/outbox and combined deliverables. Add a focused source skill and wrapper using `run('registered-name')`, and package it with the shared libraries. Do not load or execute adapter paths from case evidence.
+
+Adapters may execute concurrently in separate threads. Keep mutable scan state local to the invocation and write only source-specific artifacts. Do not access the shared case database from an adapter.
 
 For a source-specific lead extractor, extend candidates() using verified fields and concrete pivots. For sources requiring a different search strategy, publish equivalent source outputs and implement a trusted adapter bridge. Every new source must preserve evidence citations and disclose timezone/coverage gaps.

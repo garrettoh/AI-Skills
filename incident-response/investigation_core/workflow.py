@@ -6,6 +6,7 @@ import json
 import re
 import sqlite3
 import sys
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -120,7 +121,7 @@ def scan(db, name, root, leads, args, destination, number):
                   outside_bounds=0, candidates_omitted=0)
     inbox = [{'id': lead[0], 'value': lead[1]} for lead in leads]
     source_dir = destination / name / f'round-{number:04d}'
-    source_dir.mkdir(parents=True)
+    source_dir.mkdir(parents=True, exist_ok=True)
     dump(source_dir / 'inbox.json', {'leads': inbox, 'input': str(root)})
     proposals = 0
     # A single literal prefilter avoids comparing every lead with every field on nonmatches.
@@ -183,6 +184,44 @@ def scan(db, name, root, leads, args, destination, number):
     dump(source_dir / 'coverage.json', summary)
     dump(source_dir / 'outbox.json', {'leads': [dict(id=k, kind=t, value=v, evidence=json.loads(e)) for k,t,v,e in db.execute('select id,kind,value,evidence from leads where origin=? and round=?', (name, number))]})
     return summary
+
+
+def scan_isolated(name, root, leads, args, destination, number, seed_leads):
+    """Each worker owns its connection and source artifacts; no shared case writes."""
+    source_dir = destination / name / f'round-{number:04d}'
+    source_dir.mkdir(parents=True, exist_ok=True)
+    # A failed, uncommitted round can be retried using the same round number.
+    staging = source_dir / 'scan.sqlite'
+    staging.unlink(missing_ok=True)
+    db = sqlite3.connect(str(staging))
+    try:
+        initialize(db)
+        db.executemany('insert into leads values(?,?,?,?,?,?,?)', seed_leads)
+        summary = scan(db, name, root, leads, args, destination, number)
+        db.commit()
+        return summary
+    finally:
+        db.close()
+
+
+def merge_scan(db, destination, name, number):
+    """Merge on the coordinator thread, preserving prior matches and first provenance."""
+    staging = destination / name / f'round-{number:04d}' / 'scan.sqlite'
+    source = sqlite3.connect(str(staging))
+    try:
+        for key, utc, path, record, field, payload in source.execute('select * from events'):
+            event = json.loads(payload)
+            previous = db.execute('select event from events where id=?', (key,)).fetchone()
+            if previous:
+                event['matched_leads'] = sorted(set(event['matched_leads'] + json.loads(previous[0])['matched_leads']))
+            db.execute('insert or replace into events values(?,?,?,?,?,?)',
+                       (key, utc, path, record, field, json.dumps(event, ensure_ascii=False)))
+        db.executemany('insert or ignore into leads values(?,?,?,?,?,?,?)',
+                       source.execute('select * from leads'))
+        db.executemany('insert or ignore into searched values(?,?)',
+                       source.execute('select * from searched'))
+    finally:
+        source.close()
 
 
 def execute(args, only=None):
@@ -248,16 +287,31 @@ def execute(args, only=None):
             raise ValueError(f'{len(leads)} active leads exceed --max-leads {args.max_leads}; review or increase the limit')
         if not leads:
             raise ValueError('No active leads; use --follow-candidates or import reviewed leads')
-        summaries = []
+        jobs = []
+        summaries = {}
         for name, root in sources.items():
             token = identity(name, str(Path(root).resolve()))
             pending = leads if args.rescan else [(k,v) for k,v in leads if not db.execute('select 1 from searched where lead=? and source=?', (k,token)).fetchone()]
             if pending:
-                summaries.append(scan(db, name, Path(root).resolve(), pending, args, destination, number))
+                jobs.append((name, Path(root).resolve(), pending))
             else:
-                summaries.append(dict(orchestrator=name, input=root, skipped='All active leads already searched; --rescan if evidence or scope changed'))
+                summaries[name] = dict(orchestrator=name, input=root, skipped='All active leads already searched; --rescan if evidence or scope changed')
+        seed_leads = list(db.execute('select * from leads'))
+        workers = min(args.workers, len(jobs))
+        if jobs:
+            with ThreadPoolExecutor(max_workers=workers) as pool:
+                futures = [(name, pool.submit(scan_isolated, name, root, pending, args,
+                                               destination, number, seed_leads))
+                           for name, root, pending in jobs]
+                # All scans are submitted first. Result collection does not serialize scans.
+                for name, future in futures:
+                    summaries[name] = future.result()
+            for name, _, _ in jobs:
+                merge_scan(db, destination, name, number)
+        summaries = [summaries[name] for name in sources]
         scope = dict(leads=[v for _,v in leads], start=args.start, end=args.end,
-                     assume_utc=args.assume_utc, encoding=args.encoding, sources=summaries)
+                     assume_utc=args.assume_utc, encoding=args.encoding,
+                     scan_workers=workers, sources=summaries)
         db.execute('insert into rounds values(?,?)', (number, json.dumps(scope, ensure_ascii=False, indent=2)))
         db.commit()
         deliver(db, destination, args.limit, number)
@@ -281,6 +335,8 @@ def run(only=None):
     parser.add_argument('--leads-file')
     parser.add_argument('--follow-candidates', action='store_true')
     parser.add_argument('--rescan', action='store_true')
+    parser.add_argument('--workers', type=int, default=2,
+                        help='Concurrent isolated source scans (default: 2; use 1 for sequential scans)')
     parser.add_argument('--max-candidates', type=int, default=200)
     parser.add_argument('--max-leads', type=int, default=500)
     parser.add_argument('--limit', type=int, default=100)
@@ -289,7 +345,7 @@ def run(only=None):
     parser.add_argument('--start')
     parser.add_argument('--end')
     args = parser.parse_args()
-    if min(args.limit, args.max_candidates, args.max_leads) < 1:
+    if min(args.limit, args.max_candidates, args.max_leads, args.workers) < 1:
         parser.error('Limits must be positive')
     for bound in ('start', 'end'):
         value = getattr(args, bound)
