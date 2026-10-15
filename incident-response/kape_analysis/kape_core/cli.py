@@ -2,7 +2,7 @@
 import argparse,csv,json,sqlite3,sys,tempfile
 from pathlib import Path
 from datetime import datetime,timezone
-from .schemas import classify
+from .schemas import classify, verified_utc
 csv.field_size_limit(16*1024*1024)
 def files(path):
  p=Path(path)
@@ -56,7 +56,7 @@ def main(mode="hunt",skill=None):
  evidence=Path(a.input).resolve();out=Path(a.output).resolve()
  if out==evidence or (evidence.is_dir() and out.is_relative_to(evidence)):p.error("Report must be outside evidence")
  paths=files(a.input)
- scanned=matched=shown=malformed=skipped=eligible=events=0;errors=[];inventory=[];bad_rows=[]
+ scanned=matched=shown=malformed=skipped=eligible=events=auto_utc=0;errors=[];inventory=[];bad_rows=[]
  out.parent.mkdir(parents=True,exist_ok=True)
  with tempfile.TemporaryDirectory(prefix="kape-") as td,out.open("w",encoding="utf-8") as report:
   db=sqlite3.connect(str(Path(td)/"timeline.db"))
@@ -100,9 +100,11 @@ def main(mode="hunt",skill=None):
       for field in profile["time_fields"]:
        raw=row[field]
        if not raw:continue
-       utc=stamp(raw,a.assume_utc)
+       source_utc=verified_utc(profile,field)
+       utc=stamp(raw,a.assume_utc or source_utc)
        if not utc:skipped+=1;continue
        if (start and utc<start) or (end and utc>end):continue
+       if source_utc:auto_utc+=1
        db.execute("insert into events values(?,?,?,?,?,?,?)",(utc,str(path),n,field,raw,profile["family"],data))
     if mode=="timeline":db.commit()
    except (OSError,UnicodeError,csv.Error,ValueError) as exc:errors.append(dict(path=str(path),error=str(exc)))
@@ -116,7 +118,7 @@ def main(mode="hunt",skill=None):
     for utc,source,n,field,raw,family,data in db.execute("select * from events order by utc,source,rownum,field limit ?",(a.limit,)):
      report.write("| "+" | ".join([utc,cell(raw,a.max_cell),field,cell(source,1000),str(n),family,data])+" |\n");shown+=1
    report.write(f"\n## Coverage and limitations\n\nEligible files: {eligible}; scanned rows: {scanned}; matching rows: {matched}; displayed records: {shown}; malformed rows: {malformed}.\n\n")
-   if mode=="timeline":report.write(f"Events in time bounds: {events}; skipped nonempty unparseable or timezone-unknown times: {skipped}; assume naive UTC: {a.assume_utc}; bounds: {start} to {end}. Separate fields are separate events. Proximity does not prove causation.\n\n")
+   if mode=="timeline":report.write(f"Events in time bounds: {events}; verified EVTX TimeCreated UTC values normalized: {auto_utc}; skipped nonempty unparseable or timezone-unknown times: {skipped}; assume other naive UTC: {a.assume_utc}; bounds: {start} to {end}. Separate fields are separate events. Proximity does not prove causation.\n\n")
    report.write("Display caps do not stop scanning. Cells can be truncated. Exact IOCs match whole fields; use keywords for embedded values. Unknown schemas are searchable but have no timeline fields. Zero matches do not prove absence.\n\n## Errors\n\n")
    if bad_rows:
     report.write("Malformed records (first 100): "+cell(json.dumps(bad_rows),20000)+"\n\n")

@@ -22,12 +22,16 @@ def main():
         with (kape / 'events.csv').open('w', encoding='utf-8', newline='') as output:
             writer = csv.writer(output)
             writer.writerow(['EventId', 'TimeCreated', 'Provider', 'Computer', 'Payload'])
-            writer.writerow(['1', '2026-01-02T03:04:05Z', 'test', 'host-a',
+            writer.writerow(['1', '2026-10-14 23:38:10.6868903', 'test', 'host-a',
                              'FleetDeck downloaded https://example.invalid/drop.exe'])
-            writer.writerow(['2', '2026-01-02 03:04:06', 'test', 'host-a', 'FleetDeck naive UTC unknown'])
-        record = dict(datetime='2026-01-02T03:04:04+00:00', timestamp_desc='Visit Time',
+        with (kape / 'srum.csv').open('w', encoding='utf-8', newline='') as output:
+            writer = csv.writer(output)
+            writer.writerow(['Id', 'Timestamp', 'ExeInfo', 'Sid', 'AppId', 'Payload'])
+            writer.writerow(['2', '2026-10-14 23:38:11', 'test.exe', 'S-1-1-0', '1',
+                             'FleetDeck naive timestamp without verified timezone'])
+        record = dict(datetime='2026-10-14T21:50:40+00:00', timestamp_desc='Visit Time',
                       data_type='chrome:history:page_visited', profile='profile-a',
-                      url='https://example.invalid/drop.exe', message='visit')
+                      url='https://example.invalid/fleetdeck/drop.exe', message='visit')
         (browser / 'chrome.jsonl.jsonl').write_text(json.dumps(record) + '\n', encoding='utf-8')
         command = [sys.executable, str(script), '--case', 'check', '--source', f'kape={kape}',
                    '--source', f'hindsight={browser}', '--lead', 'fleetdeck']
@@ -51,11 +55,20 @@ def main():
         if not (case / 'report.md').exists():
             raise RuntimeError('No deliverable before follow-up')
         initial = [json.loads(line) for line in (case / 'timeline.jsonl').read_text().splitlines()]
-        if len(initial) != 1 or initial[0]['orchestrator'] != 'kape':
-            raise RuntimeError('Initial lead was not searched independently in both sources')
+        if len(initial) != 2 or [event['orchestrator'] for event in initial] != ['hindsight', 'kape']:
+            raise RuntimeError('Initial lead was not searched across both sources and UTC-sorted')
+        if initial[1]['timestamp_utc'] != '2026-10-14T23:38:10.686890+00:00':
+            raise RuntimeError('Naive EvtxECmd TimeCreated was not normalized as UTC')
+        if initial[1]['timezone_basis'] != 'EvtxECmd TimeCreated (EVTX SystemTime UTC)':
+            raise RuntimeError('EVTX UTC basis was not disclosed')
+        from zoneinfo import ZoneInfo
+        from datetime import datetime
+        pacific = datetime.fromisoformat(initial[1]['timestamp_utc']).astimezone(ZoneInfo('America/Los_Angeles'))
+        if pacific.isoformat() != '2026-10-14T16:38:10.686890-07:00':
+            raise RuntimeError('EVTX UTC timestamp did not convert to the expected Pacific daylight time')
         untimed = [json.loads(line) for line in (case / 'untimed.jsonl').read_text().splitlines()]
-        if len(untimed) != 1 or untimed[0]['timestamp_utc'] is not None:
-            raise RuntimeError('Unknown timezone was not preserved as untimed')
+        if len(untimed) != 1 or untimed[0]['timestamp_utc'] is not None or untimed[0]['family'] != 'srum':
+            raise RuntimeError('Unverified non-EVTX KAPE timezone was not preserved as untimed')
         leads = json.loads((case / 'leads.json').read_text())['leads']
         url = next(lead for lead in leads if lead['kind'] == 'url')
         if url['status'] != 'candidate' or not url['evidence']['parent_leads']:
@@ -83,7 +96,7 @@ def main():
             raise RuntimeError('Malformed JSONL coverage missing')
         if not (case / 'report.md').exists():
             raise RuntimeError('Partial deliverable lost')
-    print('PASS: automatic dashboard each round (including partial coverage), initial dispatch, deliverable before pivot, KAPE-to-Hindsight URL exchange, UTC sorting, untimed retention, deduplication and malformed coverage')
+    print('PASS: automatic dashboard each round (including partial coverage), initial dispatch, deliverable before pivot, KAPE-to-Hindsight URL exchange, EVTX UTC normalization and Pacific conversion, non-EVTX untimed retention, UTC sorting, deduplication and malformed coverage')
 
 
 if __name__ == '__main__':

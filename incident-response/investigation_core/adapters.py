@@ -8,7 +8,7 @@ import zipfile
 from pathlib import Path
 from xml.etree import ElementTree as ET
 from kape_core.cli import reader
-from kape_core.schemas import classify
+from kape_core.schemas import classify, verified_utc
 
 NS = '{http://schemas.openxmlformats.org/spreadsheetml/2006/main}'
 
@@ -37,7 +37,7 @@ def kape(root, encoding, coverage):
                     continue
                 yield {'source': str(path), 'record': str(number), 'data': row,
                        'family': profile['family'],
-                       'times': [(f, row[f], False) for f in profile['time_fields'] if row[f]],
+                       'times': [(f, row[f], verified_utc(profile, f)) for f in profile['time_fields'] if row[f]],
                        'host': row.get('Computer', row.get('ComputerName', '')),
                        'user': row.get('UserName', row.get('Sid', '')), 'profile': ''}
         except Exception as exc:

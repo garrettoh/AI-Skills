@@ -149,9 +149,13 @@ def scan(db, name, root, leads, args, destination, number):
                 eligible = True
                 key = identity(name, record['source'], record['record'], field, raw)
                 observation = '; '.join(f'{k}={v}' for k, v in record['data'].items() if v not in ('', None))
+                verified_evtx_utc = (name == 'kape' and record['family'] == 'evtx' and
+                                     field.casefold() == 'timecreated')
                 event = dict(event_id=key, timestamp_utc=utc, timestamp_raw=raw,
-                             time_field=field, timezone_basis='explicit UTC header' if explicit_utc else
-                             ('assumed UTC for naive values' if args.assume_utc else 'offset in original or unknown'),
+                             time_field=field, timezone_basis=(
+                             'EvtxECmd TimeCreated (EVTX SystemTime UTC)' if verified_evtx_utc else
+                             'explicit UTC header' if explicit_utc else
+                             'assumed UTC for naive values' if args.assume_utc else 'offset in original or unknown'),
                              orchestrator=name, family=record['family'], source=record['source'],
                              record=record['record'], host=record['host'], user=record['user'],
                              profile=record['profile'], matched_leads=matched,

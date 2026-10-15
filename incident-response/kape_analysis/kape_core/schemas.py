@@ -27,3 +27,8 @@ def classify(headers,filename=""):
  if "amcache" in filename.lower() and ("KeyLastWriteTimestamp" in h or "ProgramId" in h):
   return dict(family="amcache-metadata",skill="ez-prefetch-parser",basis="filename plus metadata columns",time_fields=[t for t in ["KeyLastWriteTimestamp","InstallDate"] if t in h])
  return dict(family="unknown",skill=None,basis="no supported signature",time_fields=[])
+
+def verified_utc(profile,field):
+ # EVTX System/TimeCreated/@SystemTime values are UTC FILETIME values. EvtxECmd
+ # emits this field as TimeCreated in its CSV without preserving a UTC suffix.
+ return profile.get("family")=="evtx" and field.casefold()=="timecreated"

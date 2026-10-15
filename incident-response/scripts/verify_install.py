@@ -42,7 +42,7 @@ def main():
         with (evidence / 'events.csv').open('w', encoding='utf-8', newline='') as output:
             writer = csv.writer(output)
             writer.writerow(['EventId', 'TimeCreated', 'Provider', 'Computer', 'Payload'])
-            writer.writerow(['4104', '2026-01-02T03:04:05Z', 'PowerShell', 'test-host', 'powershell.exe'])
+            writer.writerow(['4104', '2026-01-02 03:04:05', 'PowerShell', 'test-host', 'powershell.exe'])
         if 'ez-evtx-parser' in names:
             script = component_path(root, 'ez-evtx-parser') / 'scripts/filter_csv.py'
             report = work / 'filtered.md'
@@ -58,8 +58,9 @@ def main():
                 raise RuntimeError('KAPE router did not identify EVTX')
             report = work / 'timeline.md'
             run([sys.executable, str(folder / 'correlate_timeline.py'), str(evidence), '--keyword', 'powershell.exe', '--output', str(report)])
-            if 'Events in time bounds: 1' not in report.read_text(encoding='utf-8'):
-                raise RuntimeError('KAPE timeline did not normalize the synthetic event')
+            text = report.read_text(encoding='utf-8')
+            if 'Events in time bounds: 1' not in text or 'verified EVTX TimeCreated UTC values normalized: 1' not in text:
+                raise RuntimeError('KAPE timeline did not automatically normalize naive EVTX TimeCreated as UTC')
             run([sys.executable, str(folder / 'investigate.py'), str(evidence), '--case', 'kape',
                  '--lead', 'powershell.exe', '--output-root', str(work / 'agent_output')])
         if 'hindsight-orchestrator' in names:

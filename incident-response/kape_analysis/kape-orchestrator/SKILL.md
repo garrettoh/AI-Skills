@@ -28,7 +28,7 @@ Run from the monorepo root with Python 3.10+. Keep the complete repository toget
 
 Inventory reads headers only and reports schema, route, size and errors.
 
-Use scripts/hunt_csv.py for generic searches including unknown schemas. Use scripts/correlate_timeline.py with the same hunt filters for a disk-sorted timeline. Naive timestamps are excluded unless --assume-utc is supplied after verifying export timezone. --start/--end accept ISO timestamps with offsets. Original time values and field labels are retained. Read [routing](references/routing.md) for child scopes.
+Use scripts/hunt_csv.py for generic searches including unknown schemas. Use scripts/correlate_timeline.py with the same hunt filters for a disk-sorted timeline. EVTX `TimeCreated` fields are automatically normalized as UTC because they originate from EVTX `System/TimeCreated/@SystemTime` ([EVTX format](https://github.com/libyal/libevtx/blob/main/documentation/Windows%20XML%20Event%20Log%20%28EVTX%29.asciidoc)); EvtxECmd's CSV omits the zone suffix. Other naive KAPE timestamps are excluded unless --assume-utc is supplied after verifying their timezone. --start/--end accept ISO timestamps with offsets. Original time values and field labels are retained. Read [routing](references/routing.md) for child scopes.
 
 ## Context and evidence rules
 

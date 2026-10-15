@@ -75,7 +75,7 @@ KAPE and Hindsight scan concurrently by default within this single command. Each
 
 For an agentic investigation, ask the agent to investigate a suspected FleetDeck download using both evidence roots. The agent reads investigation-orchestrator/SKILL.md and invokes the command above. Two Python workers search Windows CSV and browser JSONL at the same time; the agent then reviews their combined evidence and writes analysis.md. A discovered download URL can become a reviewed lead in the next round to connect browser activity with Windows artifacts. The helper supplies concurrent source scans without requiring separate model agents.
 
-Reuse the case ID and pass a reviewed JSON lead list with `--leads-file`, or deliberately adopt all candidates with `--follow-candidates`. Each invocation completes one round and its deliverable. Run one writer per case. Previously searched leads are skipped per source root; `--rescan` is required after evidence or scope changes. Time bounds require ISO offsets; naive timestamps stay untimed unless `--assume-utc` has been verified. Display caps do not stop scans or truncate full event exports.
+Reuse the case ID and pass a reviewed JSON lead list with `--leads-file`, or deliberately adopt all candidates with `--follow-candidates`. Each invocation completes one round and its deliverable. Run one writer per case. Previously searched leads are skipped per source root; `--rescan` is required after evidence or scope changes. Time bounds require ISO offsets. KAPE EVTX `TimeCreated` is automatically normalized as UTC from EVTX `System/TimeCreated/@SystemTime`; other naive timestamps stay untimed unless `--assume-utc` has been verified. Display caps do not stop scans or truncate full event exports.
 
 Standalone Hindsight:
 

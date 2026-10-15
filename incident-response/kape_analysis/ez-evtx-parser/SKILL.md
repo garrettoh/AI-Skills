@@ -13,6 +13,8 @@ Use for pre-parsed CSV artifacts described above. Raw artifacts and archive extr
 
 Inspect EventId with Provider and Channel; mappings vary. Preserve EventRecordId, Computer, SourceFile and relevant payload fields. Event ID alone is insufficient for interpretation.
 
+EvtxECmd's `TimeCreated` CSV field is UTC even though the exported value has no `Z` suffix: it serializes the EVTX `System/TimeCreated/@SystemTime` value, which is UTC. The KAPE timeline helpers normalize this field automatically. Do not infer that other KAPE artifact timestamps are UTC from this rule.
+
 Run from the monorepo root with Python 3.10+. Keep the complete repository together: each helper imports the sibling kape_core directory.
 
     python ez-evtx-parser/scripts/filter_csv.py INPUT --output REPORT.md
