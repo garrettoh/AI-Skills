@@ -26,7 +26,7 @@ def main():
                              'FleetDeck downloaded https://example.invalid/drop.exe'])
         with (kape / 'srum.csv').open('w', encoding='utf-8', newline='') as output:
             writer = csv.writer(output)
-            writer.writerow(['Id', 'Timestamp', 'ExeInfo', 'Sid', 'AppId', 'Payload'])
+            writer.writerow(['BatchKeyPath', 'Timestamp', 'BatchValueName', 'Sid', 'AppId', 'Payload'])
             writer.writerow(['2', '2026-10-14 23:38:11', 'test.exe', 'S-1-1-0', '1',
                              'FleetDeck naive timestamp without verified timezone'])
         record = dict(datetime='2026-10-14T21:50:40+00:00', timestamp_desc='Visit Time',
@@ -67,7 +67,7 @@ def main():
         if pacific.isoformat() != '2026-10-14T16:38:10.686890-07:00':
             raise RuntimeError('EVTX UTC timestamp did not convert to the expected Pacific daylight time')
         untimed = [json.loads(line) for line in (case / 'untimed.jsonl').read_text().splitlines()]
-        if len(untimed) != 1 or untimed[0]['timestamp_utc'] is not None or untimed[0]['family'] != 'srum':
+        if len(untimed) != 1 or untimed[0]['timestamp_utc'] is not None or untimed[0]['family'] != 'registry-detail':
             raise RuntimeError('Unverified non-EVTX KAPE timezone was not preserved as untimed')
         leads = json.loads((case / 'leads.json').read_text())['leads']
         url = next(lead for lead in leads if lead['kind'] == 'url')

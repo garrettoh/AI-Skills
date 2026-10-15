@@ -86,7 +86,7 @@ def main():
         with contextlib.closing(sqlite3.connect(parallel / 'investigation.sqlite')) as db:
             scope = json.loads(db.execute('select scope from rounds').fetchone()[0])
             assert scope['scan_workers'] == 2
-            assert db.execute('select count(*) from searched').fetchone()[0] == 2
+            assert db.execute("select count(*) from searched where lead != '__triage_v2_timezones__'").fetchone()[0] == 2
             assert db.execute('select count(*) from leads where kind="url"').fetchone()[0] == 1
         # New lead searches must union prior event matches rather than replace them.
         run(options('parallel', 2, url))

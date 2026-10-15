@@ -1,6 +1,8 @@
 [CmdletBinding()]
 param(
     [string]$SkillsRoot,
+    [string]$Timezone,
+    [switch]$ListTimezones,
     [Alias('Skill')][string[]]$Skills,
     [switch]$List,
     [switch]$Preview,

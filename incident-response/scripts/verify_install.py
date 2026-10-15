@@ -59,7 +59,7 @@ def main():
             report = work / 'timeline.md'
             run([sys.executable, str(folder / 'correlate_timeline.py'), str(evidence), '--keyword', 'powershell.exe', '--output', str(report)])
             text = report.read_text(encoding='utf-8')
-            if 'Events in time bounds: 1' not in text or 'verified EVTX TimeCreated UTC values normalized: 1' not in text:
+            if 'Events in time bounds: 1' not in text or 'verified EZ Tools UTC values normalized: 1' not in text:
                 raise RuntimeError('KAPE timeline did not automatically normalize naive EVTX TimeCreated as UTC')
             run([sys.executable, str(folder / 'investigate.py'), str(evidence), '--case', 'kape',
                  '--lead', 'powershell.exe', '--output-root', str(work / 'agent_output')])
@@ -73,7 +73,11 @@ def main():
             events = [json.loads(line) for line in (work / 'agent_output/browser/timeline.jsonl').read_text().splitlines()]
             if len(events) != 1 or events[0]['profile'] != 'test-profile' or events[0]['record'] != '1':
                 raise RuntimeError('Standalone Hindsight normalization failed')
+    if 'kape_core' in dependencies(names):
+        print(run([sys.executable, str(Path(__file__).with_name('verify_timezones.py'))]).strip())
     if 'investigation-orchestrator' in names:
+        print(run([sys.executable, str(Path(__file__).with_name('verify_triage.py')),
+                   '--skills-root', str(root)]).strip())
         print(run([sys.executable, str(Path(__file__).with_name('verify_orchestration.py')),
                    '--skills-root', str(root)]).strip())
     print(f'PASS: {len(names)} selected skill(s), required helpers and applicable workflows at {root}')

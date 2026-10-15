@@ -53,6 +53,14 @@ Omit `--skills` to verify the full collection. Legacy KAPE installer and verifie
 
 ## Shared investigations
 
+The main orchestrator accepts KAPE and Hindsight folders without initial IOCs. It automatically discovers incident leads across downloads/domains, program inventory, logons, access/account/group changes, services/tasks/autoruns, RMMs, PowerShell and security detections. Source workers combine discovery and optional lead searches in one streaming pass, aggregate routine activity on disk, and retain priority records in the timeline. Read `triage.md` and `case-brief.json` before reviewing cited raw records; the agent writes the final account to `analysis.md`. Earliest observed evidence is not automatically initial compromise. Product presence, a logon or a script match alone does not prove malicious action or successful access.
+
+```powershell
+python incident-response/investigation-orchestrator/scripts/investigate.py --case incident-01 --source "kape=C:\case\parse" --source "hindsight=C:\case\Hindsight_Manual_Drops"
+```
+
+Add `--lead` for optional IOCs. RMM extraction is integrated into this command. Use `--leads-only` for a targeted search; completed discovery is cached per source and `--rescan` refreshes it. Category summaries are bounded to five groups with first/last evidence; all groups remain in per-source `triage-groups.jsonl`. See [the main skill](investigation-orchestrator/SKILL.md) for investigation and time-attribution rules.
+
 Each structured investigation automatically creates **dashboard.html**, the primary user deliverable. Open it locally to browse a searchable UTC timeline with activity bars, source/artifact/date filters, untimed observations, full evidence records, lead provenance and coverage. The HTML is self-contained and uses no network services. Keep the case exports alongside it for download links. After writing analyst interpretation to analysis.md, refresh the page:
 
 ```powershell
@@ -61,7 +69,7 @@ python incident-response/investigation-orchestrator/scripts/build_dashboard.py a
 
 The shared workflow calls the Python builder automatically at the end of every round. The builder fills a fixed HTML/CSS/JavaScript template with case exports; agents do not design or generate a new dashboard each time. The refresh command above only updates the embedded data after analyst edits. Generated reports and demos are excluded from Git by `reports/` and `agent_output/`; verification fixtures use temporary directories.
 
-Deliver the dashboard link with a short completion note instead of repeating the incident report in agent output. The dashboard embeds all matched observations and paginates rendering; browser memory grows with case size. Analyst Markdown is shown as literal text.
+Deliver the dashboard link with a short completion note instead of repeating the incident report in agent output. It opens with an analyst-authored overview from optional `overview.json` (verdict, confidence, summary, findings, unknowns and cited milestones). The full report supports Markdown headings, lists, tables, emphasis, quotes, code and safe links with a contents sidebar. Raw records are available through evidence drill-down. Rendering works offline and escapes embedded HTML. The dashboard embeds selected observations and paginates rendering; browser memory grows with case size.
 
 From the repository root, or use absolute script paths from your case working directory:
 
@@ -75,7 +83,7 @@ KAPE and Hindsight scan concurrently by default within this single command. Each
 
 For an agentic investigation, ask the agent to investigate a suspected FleetDeck download using both evidence roots. The agent reads investigation-orchestrator/SKILL.md and invokes the command above. Two Python workers search Windows CSV and browser JSONL at the same time; the agent then reviews their combined evidence and writes analysis.md. A discovered download URL can become a reviewed lead in the next round to connect browser activity with Windows artifacts. The helper supplies concurrent source scans without requiring separate model agents.
 
-Reuse the case ID and pass a reviewed JSON lead list with `--leads-file`, or deliberately adopt all candidates with `--follow-candidates`. Each invocation completes one round and its deliverable. Run one writer per case. Previously searched leads are skipped per source root; `--rescan` is required after evidence or scope changes. Time bounds require ISO offsets. KAPE EVTX `TimeCreated` is automatically normalized as UTC from EVTX `System/TimeCreated/@SystemTime`; other naive timestamps stay untimed unless `--assume-utc` has been verified. Display caps do not stop scans or truncate full event exports.
+Reuse the case ID and pass a reviewed JSON lead list with `--leads-file`, or deliberately adopt all candidates with `--follow-candidates`. Each invocation completes one round and its deliverable. Run one writer per case. Previously searched leads are skipped per source root; `--rescan` is required after evidence or scope changes. Time bounds require ISO offsets. KAPE EVTX `TimeCreated` is automatically normalized as UTC from EVTX `System/TimeCreated/@SystemTime`; other verified EZ Tools UTC fields also normalize automatically (see `kape_analysis/kape_core/timezones.md`); unknown/local fields require verified `--source-timezone FAMILY.FIELD=ZONE`. Display caps do not stop scans or truncate full event exports.
 
 Standalone Hindsight:
 
@@ -84,3 +92,7 @@ python incident-response/hindsight-orchestrator/scripts/hunt_hindsight.py "C:\ca
 ```
 
 Standalone KAPE and its artifact helpers are documented in the [KAPE guide](kape_analysis/README.md). Future source orchestrators register through the [exchange contract](investigation_core/exchange.md). Preserve source/record citations, host/user/profile uncertainty and original timestamp semantics. Matching a hypothesis does not establish compromise.
+
+## Timezones
+
+Use `--timezone America/Los_Angeles` (or any IANA name / fixed offset) for analysis display. Installation accepts `--timezone` / PowerShell `-Timezone`. Saved case preference overrides installation default. UTC remains the correlation clock; raw evidence is retained. The HTML evidence timeline has a timezone selector. Verified EZ Tools fields normalize automatically; SBECmd and unverified registry plugin local fields need `--source-timezone FAMILY.FIELD=ZONE`. See the shared `kape_core/timezones.md` reference.

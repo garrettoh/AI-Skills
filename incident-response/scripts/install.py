@@ -1,5 +1,6 @@
 """Preview, confirm, install and verify any selection of incident response skills."""
 import argparse
+import json
 import os
 import shutil
 import subprocess
@@ -19,7 +20,16 @@ def main():
     parser.add_argument('--list', action='store_true')
     parser.add_argument('--preview', '--dry-run', action='store_true', help='Show plan without changing files')
     parser.add_argument('--yes', action='store_true', help='Use only after explicit user approval of the displayed plan')
+    parser.add_argument('--timezone', help='Default display timezone: IANA name, UTC or fixed offset')
+    parser.add_argument('--list-timezones', action='store_true')
     args = parser.parse_args()
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'kape_analysis'))
+    from kape_core.timezones import zone, list_zones, default_timezone
+    if args.list_timezones:
+        print('\n'.join(list_zones()))
+        return 0
+    if args.timezone:
+        zone(args.timezone)
     if args.list:
         print('Available skills (default: all):')
         for name in SKILLS:
@@ -40,6 +50,8 @@ def main():
         source = package / paths[name]
         if not source.is_dir() or (name in SKILLS and not (source / 'SKILL.md').is_file()):
             raise ValueError(f'Missing source component: {source}')
+    timezone_name = args.timezone or default_timezone(destination / 'kape_core/settings.json')
+    print(f'Default display timezone: {timezone_name}')
     print(f'Installation destination: {destination}')
     print(f'Skills to install ({len(names)}):')
     for name in names:
@@ -68,6 +80,8 @@ def main():
     for name in names + helpers:
         shutil.copytree(package / paths[name], destination / name, dirs_exist_ok=True,
                         ignore=shutil.ignore_patterns('__pycache__', '*.pyc', '*.pyo'))
+    if 'kape_core' in helpers:
+        (destination / 'kape_core/settings.json').write_text(json.dumps({'display_timezone': timezone_name}, indent=2), encoding='utf-8')
     result = subprocess.run([sys.executable, str(Path(__file__).with_name('verify_install.py')),
                              '--skills-root', str(destination), '--skills', *names])
     if result.returncode:

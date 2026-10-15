@@ -51,6 +51,8 @@ with tempfile.TemporaryDirectory() as temporary:
     assert '</script><img' in payload['events'][-1]['observation']
     assert payload['coverage'][0]['details']['invalid_or_unknown_times'] == 1
     assert payload['analysis'].startswith('# Synthetic preview')
+    assert '<h1 id=' in payload['analysis_html']
+    assert payload['outline'][0]['title'].startswith('Synthetic preview')
     (root / 'timeline.jsonl').unlink()
     try:
         build_dashboard(root)

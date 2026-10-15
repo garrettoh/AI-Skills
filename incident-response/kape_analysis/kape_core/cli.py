@@ -2,7 +2,8 @@
 import argparse,csv,json,sqlite3,sys,tempfile
 from pathlib import Path
 from datetime import datetime,timezone
-from .schemas import classify, verified_utc
+from .schemas import classify, verified_utc, utc_basis
+from .timezones import TimestampPolicy, default_timezone, display_timestamp, source_rules, list_zones, zone
 csv.field_size_limit(16*1024*1024)
 def files(path):
  p=Path(path)
@@ -36,14 +37,19 @@ def cell(v,cap=240):
  return v if len(v)<=cap else v[:cap]+"… [truncated]"
 def main(mode="hunt",skill=None):
  p=argparse.ArgumentParser(description=__doc__)
- p.add_argument("input");p.add_argument("--output",required=True);p.add_argument("--encoding",default="utf-8-sig")
+ p.add_argument("input",nargs="?");p.add_argument("--output");p.add_argument("--encoding",default="utf-8-sig")
  if mode!="inventory":
   p.add_argument("--keyword",action="append",default=[]);p.add_argument("--ioc",action="append",default=[])
   p.add_argument("--where",action="append",default=[]);p.add_argument("--search-columns");p.add_argument("--columns")
   p.add_argument("--limit",type=int,default=100);p.add_argument("--max-cell",type=int,default=240)
  if mode=="timeline":
   p.add_argument("--assume-utc",action="store_true");p.add_argument("--start");p.add_argument("--end")
+ p.add_argument("--timezone");p.add_argument("--source-timezone",action="append");p.add_argument("--list-timezones",action="store_true")
  a=p.parse_args();predicates=[];start=end=None
+ if a.list_timezones:print("\n".join(list_zones()));return 0
+ if not a.input or not a.output:p.error("input and --output are required")
+ display_zone=a.timezone or default_timezone();zone(display_zone)
+ policy=TimestampPolicy(source_rules(a.source_timezone),getattr(a,"assume_utc",False))
  if mode!="inventory":
   if a.limit<1 or a.max_cell<1:p.error("Limits must be positive")
   for w in a.where:
@@ -63,7 +69,7 @@ def main(mode="hunt",skill=None):
   if mode=="timeline":db.execute("create table events(utc text,source text,rownum integer,field text,raw text,family text,data text)")
   if mode!="inventory":
    report.write("# KAPE hunt report\n\n## Scope\n\nInput: "+cell(evidence,1000)+"\n\nFilters: "+cell(json.dumps(dict(keyword=a.keyword,ioc=a.ioc,where=a.where,search_columns=a.search_columns)),2000)+"\n\nLogical CSV record numbers include the header as row 1. Matches require analyst interpretation.\n\n## Evidence\n\n")
-   report.write("| Source CSV | Row | Family | Evidence |\n|---|---:|---|---|\n" if mode=="hunt" else "| UTC | Raw time | Time field | Source CSV | Row | Family | Evidence |\n|---|---|---|---|---:|---|---|\n")
+   report.write("| Source CSV | Row | Family | Evidence |\n|---|---:|---|---|\n" if mode=="hunt" else "| Selected timezone | UTC | Raw time | Time field | Source CSV | Row | Family | Evidence |\n|---|---|---|---|---|---:|---|---|\n")
   for path in paths:
    f=None
    try:
@@ -101,7 +107,7 @@ def main(mode="hunt",skill=None):
        raw=row[field]
        if not raw:continue
        source_utc=verified_utc(profile,field)
-       utc=stamp(raw,a.assume_utc or source_utc)
+       utc,_=policy.resolve(raw,profile["family"],field,source_utc,utc_basis(profile,field))
        if not utc:skipped+=1;continue
        if (start and utc<start) or (end and utc>end):continue
        if source_utc:auto_utc+=1
@@ -116,9 +122,9 @@ def main(mode="hunt",skill=None):
    if mode=="timeline":
     events=db.execute("select count(*) from events").fetchone()[0]
     for utc,source,n,field,raw,family,data in db.execute("select * from events order by utc,source,rownum,field limit ?",(a.limit,)):
-     report.write("| "+" | ".join([utc,cell(raw,a.max_cell),field,cell(source,1000),str(n),family,data])+" |\n");shown+=1
+     report.write("| "+" | ".join([display_timestamp(utc,display_zone),utc,cell(raw,a.max_cell),field,cell(source,1000),str(n),family,data])+" |\n");shown+=1
    report.write(f"\n## Coverage and limitations\n\nEligible files: {eligible}; scanned rows: {scanned}; matching rows: {matched}; displayed records: {shown}; malformed rows: {malformed}.\n\n")
-   if mode=="timeline":report.write(f"Events in time bounds: {events}; verified EVTX TimeCreated UTC values normalized: {auto_utc}; skipped nonempty unparseable or timezone-unknown times: {skipped}; assume other naive UTC: {a.assume_utc}; bounds: {start} to {end}. Separate fields are separate events. Proximity does not prove causation.\n\n")
+   if mode=="timeline":report.write(f"Display timezone: {display_zone}; Events in time bounds: {events}; verified EZ Tools UTC values normalized: {auto_utc}; skipped nonempty unparseable or timezone-unknown times: {skipped}; assume other naive UTC: {a.assume_utc}; bounds: {start} to {end}. Separate fields are separate events. Proximity does not prove causation.\n\n")
    report.write("Display caps do not stop scanning. Cells can be truncated. Exact IOCs match whole fields; use keywords for embedded values. Unknown schemas are searchable but have no timeline fields. Zero matches do not prove absence.\n\n## Errors\n\n")
    if bad_rows:
     report.write("Malformed records (first 100): "+cell(json.dumps(bad_rows),20000)+"\n\n")

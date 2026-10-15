@@ -23,7 +23,7 @@ class Element {
 const elements = new Map([...html.matchAll(/id="([^"]+)"/g)].map(m => [m[1], new Element('div')]));
 elements.get('case-data').textContent = embedded;
 elements.get('timing').value = 'all';
-const tabs = ['timeline', 'analysis', 'leads', 'coverage'].map(tab => { const e = new Element('button'); e.dataset.tab = tab; return e; });
+const tabs = ['overview', 'analysis', 'timeline', 'triage', 'leads', 'coverage'].map(tab => { const e = new Element('button'); e.dataset.tab = tab; return e; });
 const context = vm.createContext({document: {
     getElementById: id => elements.get(id),
     createElement: tag => new Element(tag),
@@ -53,6 +53,17 @@ if (source) {
     assert.equal(evaluate('filtered.length'), data.events.filter(e => e.orchestrator === source).length);
 }
 elements.get('reset').onclick();
+elements.get('timezone').value = 'UTC';
+elements.get('timezone').onchange();
+assert.equal(evaluate("zoned('2026-10-14T23:38:10Z',true)"),'2026-10-14');
+elements.get('timezone').value = '+05:45';
+elements.get('timezone').onchange();
+assert.equal(evaluate("zoned('2026-10-14T23:38:10Z',true)"),'2026-10-15');
+elements.get('timezone').value = 'America/Los_Angeles';
+elements.get('timezone').onchange();
+assert.equal(evaluate("zoned('2026-10-14T23:38:10Z')"),'2026-10-14 16:38:10 America/Los_Angeles');
+elements.get('timezone').value = 'UTC';
+elements.get('timezone').onchange();
 const day = data.events.find(e => e.timestamp_utc)?.timestamp_utc.slice(0, 10);
 if (day) {
     elements.get('start').value = elements.get('end').value = day;
@@ -73,7 +84,9 @@ assert.equal(elements.get('events').children[0].textContent, 'No observations ma
 tabs[1].onclick();
 assert.equal(elements.get('analysis').hidden, false);
 assert.equal(elements.get('timeline').hidden, true);
-assert.equal(elements.get('narrative').textContent, data.analysis);
+assert.equal(elements.get('narrative').innerHTML, data.analysis_html);
+assert.equal(elements.get('verdict').textContent, data.overview?.verdict||'Assessment pending');
+assert.ok(data.analysis_html.includes('<h1'));
 elements.get('leadsearch').value = 'nonexistent-test-value-97f3c';
 elements.get('leadsearch').oninput();
 assert.equal(elements.get('leadrows').children[0].textContent, '0 leads');

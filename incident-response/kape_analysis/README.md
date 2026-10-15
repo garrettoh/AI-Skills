@@ -15,7 +15,7 @@ Run from the repository root (prefix script paths with incident-response/kape_an
     python incident-response/kape_analysis/kape-orchestrator/scripts/hunt_csv.py "C:\Users\graese\Desktop\parse" --keyword powershell --output reports/hunt.md
     python incident-response/kape_analysis/kape-orchestrator/scripts/correlate_timeline.py "C:\Users\graese\Desktop\parse" --keyword powershell --output reports/timeline.md
 
-Inspect headers before choosing columns. EVTX `TimeCreated` values are normalized as UTC automatically because they originate from EVTX `System/TimeCreated/@SystemTime`. For other naive timestamp fields, add --assume-utc only after confirming their timezone; otherwise they remain out of the timeline. Validate host, user, path and timestamp semantics before causal conclusions.
+Inspect headers before choosing columns. EVTX `TimeCreated` values are normalized as UTC automatically because they originate from EVTX `System/TimeCreated/@SystemTime`. Other verified UTC fields normalize automatically via the field allowlist. Use --timezone for presentation and --source-timezone FAMILY.FIELD=ZONE for verified local exports. Unknown fields stay untimed. See kape_core/timezones.md. Validate host, user, path and timestamp semantics before causal conclusions.
 
 ## Modules
 
