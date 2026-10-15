@@ -96,3 +96,7 @@ Standalone KAPE and its artifact helpers are documented in the [KAPE guide](kape
 ## Timezones
 
 Use `--timezone America/Los_Angeles` (or any IANA name / fixed offset) for analysis display. Installation accepts `--timezone` / PowerShell `-Timezone`. Saved case preference overrides installation default. UTC remains the correlation clock; raw evidence is retained. The HTML evidence timeline has a timezone selector. Verified EZ Tools fields normalize automatically; SBECmd and unverified registry plugin local fields need `--source-timezone FAMILY.FIELD=ZONE`. See the shared `kape_core/timezones.md` reference.
+
+## Agent output location
+
+The installed setting `output_directory` defaults to `auto`. For recognized acquisitions such as `<tenant>/<host_date_time>/<hostname>_KAPE/parse` plus `Hindsight_Manual_Drops`, the orchestrator writes to `<tenant>/<host_date_time>/agent_output/`, beside the artifact folders. If it cannot identify that layout, it uses `<working-directory>/agent_output/<case>/`. Set the installation default with `python incident-response/scripts/install.py --output-directory auto` or PowerShell `./scripts/install.ps1 -OutputDirectory auto`; give an absolute path to use a fixed destination. During analysis, `--output-directory PATH` selects the exact output folder for that run. Legacy `--output-root PATH` still appends the case name.

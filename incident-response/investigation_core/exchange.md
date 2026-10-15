@@ -53,3 +53,5 @@ Register a trusted Python adapter in investigation_core/adapters.py's ADAPTERS m
 Adapters may execute concurrently in separate threads. Keep mutable scan state local to the invocation and write only source-specific artifacts. Do not access the shared case database from an adapter.
 
 For a source-specific lead extractor, extend candidates() using verified fields and concrete pivots. For sources requiring a different search strategy, publish equivalent source outputs and implement a trusted adapter bridge. Every new source must preserve evidence citations and disclose timezone/coverage gaps.
+
+Output destination is configurable in installed `kape_core/settings.json` as `output_directory` (`auto` or an exact path). The automatic resolver places results in `<acquisition-folder>/agent_output` when standard KAPE/Hindsight folder names identify a common acquisition parent. `--output-directory` overrides with an exact destination; legacy `--output-root` appends the case ID. Keep output outside evidence roots.

@@ -42,6 +42,9 @@ def main():
         text = call(full, response='y\n')
         if {p.name for p in full.iterdir()} != {*SKILLS, *dependencies(list(SKILLS))}:
             raise RuntimeError('Default install omitted components')
+        settings = json.loads((full / 'kape_core/settings.json').read_text(encoding='utf-8'))
+        if settings.get('output_directory') != 'auto':
+            raise RuntimeError('Default install did not set automatic artifact-adjacent output')
         # Installing an additional selection must preserve an existing skill and unrelated file.
         sentinel = full / 'existing-user-file.txt'
         sentinel.write_text('keep', encoding='utf-8')

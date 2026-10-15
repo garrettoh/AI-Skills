@@ -20,6 +20,7 @@ def main():
     parser.add_argument('--list', action='store_true')
     parser.add_argument('--preview', '--dry-run', action='store_true', help='Show plan without changing files')
     parser.add_argument('--yes', action='store_true', help='Use only after explicit user approval of the displayed plan')
+    parser.add_argument('--output-directory', help='Default exact output folder, or auto to place agent_output beside recognized artifacts')
     parser.add_argument('--timezone', help='Default display timezone: IANA name, UTC or fixed offset')
     parser.add_argument('--list-timezones', action='store_true')
     args = parser.parse_args()
@@ -50,8 +51,14 @@ def main():
         source = package / paths[name]
         if not source.is_dir() or (name in SKILLS and not (source / 'SKILL.md').is_file()):
             raise ValueError(f'Missing source component: {source}')
-    timezone_name = args.timezone or default_timezone(destination / 'kape_core/settings.json')
+    settings_path = destination / 'kape_core/settings.json'
+    old_settings = json.loads(settings_path.read_text(encoding='utf-8-sig')) if settings_path.exists() else {}
+    timezone_name = args.timezone or default_timezone(settings_path)
+    output_directory = args.output_directory or old_settings.get('output_directory', 'auto')
+    if output_directory != 'auto' and not str(output_directory).strip():
+        raise ValueError('--output-directory must be auto or a non-empty path')
     print(f'Default display timezone: {timezone_name}')
+    print(f'Default agent output directory: {output_directory}')
     print(f'Installation destination: {destination}')
     print(f'Skills to install ({len(names)}):')
     for name in names:
@@ -81,7 +88,7 @@ def main():
         shutil.copytree(package / paths[name], destination / name, dirs_exist_ok=True,
                         ignore=shutil.ignore_patterns('__pycache__', '*.pyc', '*.pyo'))
     if 'kape_core' in helpers:
-        (destination / 'kape_core/settings.json').write_text(json.dumps({'display_timezone': timezone_name}, indent=2), encoding='utf-8')
+        (destination / 'kape_core/settings.json').write_text(json.dumps({**old_settings, 'display_timezone': timezone_name, 'output_directory': output_directory}, indent=2), encoding='utf-8')
     result = subprocess.run([sys.executable, str(Path(__file__).with_name('verify_install.py')),
                              '--skills-root', str(destination), '--skills', *names])
     if result.returncode:

@@ -16,6 +16,7 @@ from kape_core.cli import cell, stamp
 from kape_core.timezones import TimestampPolicy, default_timezone, display_timestamp, source_rules, zone, list_zones
 from .adapters import ADAPTERS
 from .dashboard import build_dashboard
+from .output_paths import configured_destination
 from .triage import Triage
 
 
@@ -318,7 +319,7 @@ def execute(args, only=None):
         raise ValueError('Provide at least one evidence source')
     if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.-]{0,79}', args.case):
         raise ValueError('Case must be a simple name, up to 80 characters')
-    destination = Path(args.output_root).resolve() / args.case
+    destination = configured_destination(args, sources)
     settings_path = destination / 'case-settings.json'
     previous_settings = json.loads(settings_path.read_text(encoding='utf-8')) if settings_path.exists() else {}
     display_zone = getattr(args, 'timezone', None) or previous_settings.get('display_timezone') or default_timezone()
@@ -433,7 +434,8 @@ def run(only=None):
     else:
         parser.add_argument('--source', action='append', default=[], help='kape=PATH or hindsight=PATH')
     parser.add_argument('--case', default=datetime.now(timezone.utc).strftime('case-%Y%m%dT%H%M%S%fZ'))
-    parser.add_argument('--output-root', default='agent_output')
+    parser.add_argument('--output-root', help='Legacy parent folder; case name is appended')
+    parser.add_argument('--output-directory', help='Exact output folder; overrides installed output location')
     parser.add_argument('--lead', action='append', default=[])
     parser.add_argument('--leads-file')
     parser.add_argument('--follow-candidates', action='store_true')

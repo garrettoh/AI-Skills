@@ -2,6 +2,7 @@
 param(
     [string]$SkillsRoot,
     [string]$Timezone,
+    [string]$OutputDirectory,
     [switch]$ListTimezones,
     [Alias('Skill')][string[]]$Skills,
     [switch]$List,

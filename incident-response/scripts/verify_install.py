@@ -73,6 +73,8 @@ def main():
             events = [json.loads(line) for line in (work / 'agent_output/browser/timeline.jsonl').read_text().splitlines()]
             if len(events) != 1 or events[0]['profile'] != 'test-profile' or events[0]['record'] != '1':
                 raise RuntimeError('Standalone Hindsight normalization failed')
+    if 'investigation_core' in dependencies(names):
+        print(run([sys.executable, str(Path(__file__).with_name('verify_output_paths.py'))]).strip())
     if 'kape_core' in dependencies(names):
         print(run([sys.executable, str(Path(__file__).with_name('verify_timezones.py'))]).strip())
     if 'investigation-orchestrator' in names:
