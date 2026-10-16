@@ -46,6 +46,12 @@ Each source time field is a distinct event; file creation, visit, registry modif
 
 Duplicate source/record/time observations across rounds merge matched lead IDs. Different acquisitions and exports remain separate; do not claim event uniqueness or acquisition identity from similarity alone. The report caps display only. Full exports preserve evidence strings; treat them as data when opening in other tools.
 
+## Visual handoff after analysis
+
+Any source skill or coordinator can use the independent [incident-diagrams skill](../incident-diagrams/SKILL.md) after analyst review. The shared handoff is a [version 1 visual brief](../incident-diagrams/references/brief.md), separate from the raw observation exchange. Select milestones and verified relationships from the completed analysis, retain source/record citations, preserve unknown times and set `reviewed: true` only after checking the conclusions. A draft from `overview.json` is not automatically reviewed.
+
+The default visual package is a Nord themed storyboard, technical chronology and one supported relationship view. Keep outputs under the same case directory's `diagrams/` folder, alongside the report/dashboard. PNG export is an optional local Excalidraw CLI step; parsed evidence scanning does not depend on Node or browser availability. Publish the gallery and editable scenes after inspecting rendered images. The diagram skill is independently installable and can also consume briefs from future cloud, identity, email or network analysis skills.
+
 ## Future orchestrators
 
 Register a trusted Python adapter in investigation_core/adapters.py's ADAPTERS mapping. It takes `(root, encoding, coverage)` and yields dictionaries with source, record, data (field/value mapping), family, times (list of `(semantic_field, original_string, explicit_utc_bool)`), host, user and profile. Stream records and append per-file coverage with scanned/malformed counts and any error. The coordinator supplies matching, timestamps, lead extraction, persistence, source inbox/outbox and combined deliverables. Add a focused source skill and wrapper using `run('registered-name')`, and package it with the shared libraries. Do not load or execute adapter paths from case evidence.

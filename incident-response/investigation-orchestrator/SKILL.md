@@ -58,6 +58,18 @@ python incident-response/investigation-orchestrator/scripts/build_dashboard.py a
 
 Write `overview.json` beside `analysis.md` for the dashboard's opening assessment: `verdict`, `confidence`, `summary`, `findings` (strings), `unknowns` (strings), and `milestones` (objects with `time`, `title`, `description`, `evidence`). Publish only analyst-supported conclusions and cited milestones; absent this file the dashboard shows assessment pending. Refresh after editing either file. Present `dashboard.html` with a short completion note. It opens with the overview and provides a report contents sidebar, formatted Markdown, triage, timeline, leads and coverage. Headings, emphasis, lists, tables, quotes, code and safe links render offline; raw HTML remains escaped. Keep JSONL/CSV downloads beside it.
 
+## Publish incident diagrams
+
+After reviewing the analysis and cited milestones, use the sibling [incident-diagrams skill](../incident-diagrams/SKILL.md) when installed to generate complementary Nord themed deliverables in the case output's `diagrams/` folder. Default to a short storyboard for nontechnical readers, a technical chronology, and one supported relationship view when useful. The diagram skill works from a reviewed visual brief; the raw timeline and `overview.json` are input leads rather than automatic approval of conclusions.
+
+```powershell
+python incident-response/incident-diagrams/scripts/build_diagrams.py --case-dir CASE_OUTPUT --prepare
+```
+
+Review the draft against `analysis.md` and cited records, then save `diagrams/diagram-brief.json` with verified times, concise labels, evidence references and `reviewed: true`. Add supported entities and relationships for data flow, identity or movement. Build and render using the diagram skill's instructions. Include `diagrams/index.html` and selected PNGs beside the dashboard in the final handoff. Refresh drawings when the reviewed assessment changes; render after analysis rather than during raw scanning or every discovery round.
+
+If the sibling skill is absent in a partial installation, complete the dashboard/report and report that diagram generation is unavailable in that selection. Other investigation skills can use the same brief contract directly without depending on the coordinator.
+
 ## Efficiency and evidence constraints
 
 - The Python workers classify and aggregate; model reasoning concentrates on the compact index and cited suspicious records. Memory for aggregation is bounded; complete groups are on disk. Full records are retained for priority events and explicit lead matches.

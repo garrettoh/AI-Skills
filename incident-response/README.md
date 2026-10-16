@@ -1,10 +1,11 @@
 # Incident response skills
 
-Eleven skills for parsed forensic exports, with Python 3.10+ and standard library helpers. Evidence remains local.
+Twelve skills for parsed forensic exports and incident drawings, with Python 3.10+ and standard library helpers. Evidence remains local. Optional PNG export uses the official Excalidraw CLI and a local browser.
 
 | Folder | Purpose |
 |---|---|
 | investigation-orchestrator/ | Main coordinator, shared leads and normalized deliverables |
+| incident-diagrams/ | Independent Nord themed Excalidraw diagrams and optional PNGs |
 | hindsight-orchestrator/ | Independent Hindsight browser analyzer, streaming JSONL first |
 | kape_analysis/ | KAPE orchestrator, eight artifact skills and kape_core |
 | investigation_core/ | Shared workflow, streaming adapters and exchange contract |
@@ -15,11 +16,12 @@ Eleven skills for parsed forensic exports, with Python 3.10+ and standard librar
 From the repository root in PowerShell:
 
 ```powershell
-# Default: show all eleven skills and required helpers, then ask for approval.
+# Default: show all twelve skills and required helpers, then ask for approval.
 .\incident-response\scripts\install.ps1
 
 # Select one skill or several skills.
 .\incident-response\scripts\install.ps1 -Skills hindsight-orchestrator
+.\incident-response\scripts\install.ps1 -Skills incident-diagrams
 .\incident-response\scripts\install.ps1 -Skills kape-orchestrator,ez-evtx-parser
 
 # List choices or preview without installing.
@@ -29,7 +31,7 @@ From the repository root in PowerShell:
 
 Every individual skill can be selected. The plan names the destination, selected skills, required shared helpers, and whether components are new or will update existing files. Installation starts only after an explicit `y` or `yes`; Enter, rejection and closed input cancel with no destination writes. Default selection is all skills. Existing unselected skills are retained. Shared helper files used by existing skills may be updated and are included in the plan.
 
-Default destination is `$CODEX_HOME/skills` or `~/.codex/skills`. Use `-SkillsRoot C:\path\to\skills` to choose another directory. The installer copies dependencies automatically: every current skill needs kape_core; the three orchestrators also need investigation_core. Selecting one orchestrator does not automatically install other skill folders. The main coordinator's adapters can process both source types with its helpers; install source skills when their specialist instructions are needed.
+Default destination is `$CODEX_HOME/skills` or `~/.codex/skills`. Use `-SkillsRoot C:\path\to\skills` to choose another directory. The installer copies dependencies automatically: evidence analysis skills need kape_core; the three orchestrators also need investigation_core. The standalone incident-diagrams skill needs neither shared library. Selecting one orchestrator does not automatically install other skill folders. The main coordinator's adapters can process both source types with its helpers; install source skills when their specialist instructions are needed. Select incident-diagrams alongside an orchestrator for visual deliverables, or use the default full collection.
 
 On macOS/Linux, use the same Python installer through the shell wrapper:
 
@@ -92,6 +94,24 @@ python incident-response/hindsight-orchestrator/scripts/hunt_hindsight.py "C:\ca
 ```
 
 Standalone KAPE and its artifact helpers are documented in the [KAPE guide](kape_analysis/README.md). Future source orchestrators register through the [exchange contract](investigation_core/exchange.md). Preserve source/record citations, host/user/profile uncertainty and original timestamp semantics. Matching a hypothesis does not establish compromise.
+
+## Incident diagrams
+
+The [incident-diagrams skill](incident-diagrams/SKILL.md) turns reviewed analysis into complementary views for nontechnical and technical audiences. It is a standalone skill and is included in the default full installation. Any analysis skill can hand it a [reviewed visual brief](incident-diagrams/references/brief.md); it does not require KAPE or Windows evidence.
+
+The workflow is **analysis and cited findings → draft brief → analyst review → Nord themed editable scenes → local PNG export → visual inspection → gallery delivery**. Storyboard and technical chronology are the default pair, with one supported network movement, data flow or identity view added automatically. Explicit format selection is available. The [format guide](incident-diagrams/references/formats.md) describes when to use each view.
+
+```powershell
+# Prepare a draft from the completed case overview; review it before building.
+python incident-response/incident-diagrams/scripts/build_diagrams.py --case-dir agent_output/incident-01 --prepare
+
+# After review, save diagrams/diagram-brief.json with reviewed: true.
+python incident-response/incident-diagrams/scripts/build_diagrams.py --brief agent_output/incident-01/diagrams/diagram-brief.json --render
+```
+
+JSON generation is Python standard library only. PNG rendering uses the official [Excalidraw CLI](https://github.com/excalidraw/cli), Node.js 22+ and a local browser. If the CLI is absent, `--allow-npx` explicitly permits its documented npx fallback when package fetching is authorized. No account, API key or scene publication is needed for local rendering. The installer copies the skill but does not install Node, browsers or npm packages. A failed render retains editable scenes, records the error and returns a nonzero status.
+
+Outputs stay under the case's `diagrams/` directory: `.excalidraw`, successful `.png` exports, `index.html` for local review and `manifest.json` with evidence mappings and skipped formats. The helper preserves unknown times and declines unsupported network views. It does not infer lateral movement or successful exfiltration from configured access or command targets. The agent reviews the exported PNGs for readability before delivering them.
 
 ## Timezones
 

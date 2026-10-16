@@ -82,6 +82,9 @@ def main():
                    '--skills-root', str(root)]).strip())
         print(run([sys.executable, str(Path(__file__).with_name('verify_orchestration.py')),
                    '--skills-root', str(root)]).strip())
+    if 'incident-diagrams' in names:
+        print(run([sys.executable, str(Path(__file__).with_name('verify_diagrams.py')),
+                   '--skills-root', str(root)]).strip())
     print(f'PASS: {len(names)} selected skill(s), required helpers and applicable workflows at {root}')
 
 

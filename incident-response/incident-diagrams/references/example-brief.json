@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "reviewed": true,
+  "title": "Synthetic example — workstation to server incident",
+  "subtitle": "Demonstration data only; no connection to a real case",
+  "timezone": "UTC",
+  "events": [
+    {"id":"e1","time":"2026-01-02T09:00:00Z","title":"An attachment delivers a script","summary":"A downloaded attachment introduces the script to a workstation.","technical":"Browser download and file creation records identify the same script path.","lane":"WORKSTATION-01 / browser","status":"observed","milestone":true,"evidence":["Synthetic browser record 10; synthetic file record 20"]},
+    {"id":"e2","time":"2026-01-02T09:04:00Z","title":"The script runs on the workstation","summary":"Process records show the script being launched.","technical":"Process telemetry records the interpreter and script path; this is an execution observation.","lane":"WORKSTATION-01 / process","status":"observed","milestone":true,"evidence":["Synthetic process record 30"]},
+    {"id":"e3","time":"2026-01-02T09:12:00Z","title":"Activity reaches a server","summary":"Correlated source and server records establish a remote command session.","technical":"Source connection and destination authentication plus command execution share account and session context.","lane":"SERVER-01 / operator-account","status":"observed","milestone":true,"evidence":["Synthetic source connection 40; synthetic server session 50 and execution 51"]},
+    {"id":"e4","time":"2026-01-02T09:20:00Z","title":"An upload target appears","summary":"An upload command references storage; completed transfer is unconfirmed.","technical":"Command telemetry names the storage target. No receiver acknowledgement or completed transfer record is present.","lane":"SERVER-01 / transfer tool","status":"uncertain","milestone":true,"evidence":["Synthetic command record 60"]},
+    {"id":"e5","time":null,"time_label":"Response timing not supplied","title":"Containment time remains unknown","summary":"This example contains no verified response action or completion time.","technical":"Response records would be needed to place containment on the incident timeline.","lane":"Response / coverage gap","status":"unknown","milestone":false,"evidence":["Synthetic scenario coverage statement"]}
+  ],
+  "entities": [
+    {"id":"workstation","label":"WORKSTATION-01","kind":"host"},
+    {"id":"server","label":"SERVER-01","kind":"host"},
+    {"id":"storage","label":"External object storage","kind":"storage"},
+    {"id":"account","label":"operator-account","kind":"account"}
+  ],
+  "relationships": [
+    {"id":"move1","source":"workstation","target":"server","label":"Remote command session","category":"movement","status":"observed","time":"2026-01-02T09:12:00Z","evidence":["Synthetic source connection 40; server session 50 and execution 51"]},
+    {"id":"data1","source":"server","target":"storage","label":"Upload target recorded; receipt unknown","category":"data","status":"uncertain","time":"2026-01-02T09:20:00Z","evidence":["Synthetic command record 60"]},
+    {"id":"identity1","source":"account","target":"server","label":"Authenticated remote command session","category":"identity","status":"observed","time":"2026-01-02T09:12:00Z","evidence":["Synthetic server session 50 and execution 51"]}
+  ]
+}

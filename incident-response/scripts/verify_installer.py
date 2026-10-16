@@ -1,5 +1,6 @@
 """Validate install selection, approval gates and default-all behavior in isolated directories."""
 import subprocess
+import json
 import sys
 import tempfile
 from pathlib import Path
@@ -21,7 +22,7 @@ def main():
             text = call(destination, response=response)
             if destination.exists() or 'Installation cancelled' not in text:
                 raise RuntimeError('Cancellation or EOF wrote installation files')
-            if text.index('Skills to install (11)') > text.index('Install this selection?'):
+            if text.index(f'Skills to install ({len(SKILLS)})') > text.index('Install this selection?'):
                 raise RuntimeError('Confirmation appeared before the plan')
         preview = work / 'preview'
         call(preview, ['--skills', 'hindsight-orchestrator', '--preview'])
@@ -51,7 +52,7 @@ def main():
         call(full, ['--skills', 'hindsight-orchestrator'], 'yes\n')
         if sentinel.read_text() != 'keep' or not (full / 'ez-evtx-parser/SKILL.md').exists():
             raise RuntimeError('Partial update removed unselected content')
-    print('PASS: all 11 individual installs and verification, default all, explicit approval, cancellation/EOF, preview, unknown names and preserved unselected files')
+    print(f'PASS: all {len(SKILLS)} individual installs and verification, default all, explicit approval, cancellation/EOF, preview, unknown names and preserved unselected files')
 
 
 if __name__ == '__main__':

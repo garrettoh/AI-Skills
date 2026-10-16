@@ -2,6 +2,7 @@
 from pathlib import Path
 
 SKILLS = {
+    'incident-diagrams': 'incident-diagrams',
     'investigation-orchestrator': 'investigation-orchestrator',
     'hindsight-orchestrator': 'hindsight-orchestrator',
     'kape-orchestrator': 'kape_analysis/kape-orchestrator',
@@ -27,7 +28,7 @@ def select(names=None):
 
 
 def dependencies(names):
-    result = ['kape_core']
+    result = ['kape_core'] if any(name != 'incident-diagrams' for name in names) else []
     if any(name in {'investigation-orchestrator', 'hindsight-orchestrator', 'kape-orchestrator'} for name in names):
         result.append('investigation_core')
     return result

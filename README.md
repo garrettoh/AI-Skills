@@ -2,6 +2,8 @@
 
 Modular forensic and incident response skills.
 
+[Incident diagrams](incident-response/README.md#incident-diagrams) provide a reusable analysis-to-visuals workflow: Nord themed storyboards, technical chronologies and supported relationship views, with editable Excalidraw files and optional local PNG export.
+
 [Shared investigations](incident-response/README.md#shared-investigations) coordinate KAPE and Hindsight browser JSONL analysis, exchange discovered leads, and deliver a normalized timeline under the working directory's `agent_output`. Hindsight and the main coordinator have independent folders under incident-response.
 
 ## Incident response

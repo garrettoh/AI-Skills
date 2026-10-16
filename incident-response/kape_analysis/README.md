@@ -55,7 +55,7 @@ Use ez-prefetch-parser/scripts/filter_csv.py on a detailed PECmd CSV with --sear
 
 ## Install KAPE skills
 
-Use the [shared installer](../README.md#installation), which defaults to all eleven skills and asks for confirmation after showing the full plan. To install KAPE alone from the repository root:
+Use the [shared installer](../README.md#installation), which defaults to the complete collection and asks for confirmation after showing the full plan. To install KAPE alone from the repository root:
 
     .\incident-response\scripts\install.ps1 -Skills kape-orchestrator
 
