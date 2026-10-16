@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "description": "Packaged baseline; intentionally empty. Add user-specific exclusions to known-good.local.json.",
+  "scope": {"organization": null, "site": null, "host": null},
+  "reviewed_at": null,
+  "review_due": null,
+  "items": []
+}

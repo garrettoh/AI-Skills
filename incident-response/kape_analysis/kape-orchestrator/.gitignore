@@ -1,0 +1,2 @@
+# Per-user exclusions: keep local across pulls and out of commits.
+known-good.local.json

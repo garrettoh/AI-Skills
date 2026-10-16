@@ -1,0 +1,19 @@
+{
+  "type": "rmm | domain | ip | service | software | account | task | other",
+  "value": "Exact product, tenant, hostname, IP, service, or identity",
+  "approved_use": "Authorized business purpose",
+  "expected_context": {
+    "hosts": [],
+    "users": [],
+    "paths": [],
+    "publisher": null,
+    "tenant_or_relay": null,
+    "ports": [],
+    "schedule_or_time_window": null
+  },
+  "approval_source": "Ticket, owner, vendor inventory, or named approver",
+  "approved_by": "Name or role",
+  "approved_at": "YYYY-MM-DD",
+  "expires_at": "YYYY-MM-DD",
+  "notes": "Constraints and evidence supporting this approval"
+}

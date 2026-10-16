@@ -39,6 +39,10 @@ Streaming retains one CSV record at a time. Reports default to 100 records and 2
 
 Exit code 0 indicates a completed scan; 2 indicates errors or malformed rows needing review. Unknown schemas remain searchable but do not generate timeline fields. Non-CSV logs and ZIP archives are excluded. No commands from evidence are executed. Reports must be outside the evidence directory.
 
+## Per-user known-good exclusions
+
+The KAPE orchestrator package includes an empty `kape-orchestrator/known-good.json`. Add approved, scoped exclusions to `kape-orchestrator/known-good.local.json`; the nested `.gitignore` keeps personal entries out of commits, so they remain in your checkout across `git pull`. The installer copies that file into the installed skill when present. Keep entries specific, documented, and time-bounded. Exclusions lower routine triage priority but never hide matching evidence or override suspicious context. Use `kape-orchestrator/references/known-good.template.json` for entry fields.
+
 ## Extending and packaging
 
 Add specific verified header signatures and semantic time fields to incident-response/kape_analysis/kape_core/schemas.py, then a focused skill and wrapper. Use the shared installer for individual deployment with required helpers; repository scripts can also run directly. No third-party dependencies are required.
